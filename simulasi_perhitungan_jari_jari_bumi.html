@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorium Virtual: Simulasi Menghitung Jari-Jari Bumi</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        space: {
+                            900: '#0B0F19',
+                            800: '#111827',
+                            700: '#1F2937',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0B0F19;
+            color: #F3F4F6;
+            overflow-x: hidden;
+        }
+        /* Custom Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #374151;
+            border-radius: 999px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #38BDF8;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #7DD3FC;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-sky-500 selection:text-white">
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-800 bg-space-900/90 sticky top-0 z-30 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">GeodesiLab Virtual</h1>
+                    <p class="text-xs text-slate-400">Simulasi Eksperimen Perhitungan Jari-Jari & Keliling Bumi ($R_{\text{aktual}} \approx 6.371\text{ km}$)</p>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="flex flex-wrap gap-1.5 bg-slate-900 p-1.5 rounded-xl border border-slate-800 w-full md:w-auto justify-center">
+                <button onclick="switchTab('eratosthenes')" id="tab-btn-eratosthenes" class="tab-btn flex-1 md:flex-initial px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all bg-sky-500 text-white shadow-md shadow-sky-500/20">
+                    1. Metode Eratosthenes
+                </button>
+                <button onclick="switchTab('albiruni')" id="tab-btn-albiruni" class="tab-btn flex-1 md:flex-initial px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800">
+                    2. Metode Al-Biruni
+                </button>
+                <button onclick="switchTab('sunset')" id="tab-btn-sunset" class="tab-btn flex-1 md:flex-initial px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800">
+                    3. Eksperimen Pantai (Stopwatch)
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ==========================================
+             TAB 1: METODE ERATOSTHENES
+             ========================================== -->
+        <section id="tab-eratosthenes" class="space-y-6">
+            <!-- Top Metric Summary Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div class="glass-panel p-4 rounded-2xl">
+                    <span class="text-xs text-slate-400 block">Sudut Pusat ($\Delta\theta$)</span>
+                    <span id="era-card-angle" class="text-xl sm:text-2xl font-bold font-mono text-amber-400 mt-1 block">7.20°</span>
+                    <span class="text-[11px] text-slate-500">$\arctan(L / H)$</span>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl">
+                    <span class="text-xs text-slate-400 block">Keliling Bumi ($K$)</span>
+                    <span id="era-card-circum" class="text-xl sm:text-2xl font-bold font-mono text-sky-400 mt-1 block">40.000 km</span>
+                    <span class="text-[11px] text-slate-500">Aktual: $40.030\text{ km}$</span>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl">
+                    <span class="text-xs text-slate-400 block">Jari-Jari Bumi ($R$)</span>
+                    <span id="era-card-radius" class="text-xl sm:text-2xl font-bold font-mono text-emerald-400 mt-1 block">6.366,2 km</span>
+                    <span class="text-[11px] text-slate-500">Aktual: $6.371,0\text{ km}$</span>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl">
+                    <span class="text-xs text-slate-400 block">Persentase Galat (Error)</span>
+                    <span id="era-card-error" class="text-xl sm:text-2xl font-bold font-mono text-teal-300 mt-1 block">0,08%</span>
+                    <span id="era-card-status" class="text-[11px] text-emerald-400">Akurasi Sangat Tinggi</span>
+                </div>
+            </div>
+
+            <!-- Main Interactive Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Column: Canvas Visualization (7 cols) -->
+                <div class="lg:col-span-7 glass-panel rounded-2xl p-4 flex flex-col justify-between min-h-[420px] sm:min-h-[480px] relative overflow-hidden">
+                    <div class="flex items-center justify-between mb-2 z-10">
+                        <div>
+                            <h2 class="text-sm font-semibold text-white">Visualisasi Geometri Sinar Matahari & Penampang Bumi</h2>
+                            <p class="text-xs text-slate-400">Sinar matahari datang sejajar dari kanan; kelengkungan Bumi menciptakan bayangan di Kota B.</p>
+                        </div>
+                        <span class="px-2.5 py-1 text-[11px] font-mono bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-full">240 SM</span>
+                    </div>
+                    <div class="relative w-full h-[360px] sm:h-[420px] rounded-xl overflow-hidden bg-slate-950/70 border border-slate-800/80">
+                        <canvas id="canvas-eratosthenes"></canvas>
+                    </div>
+                </div>
+
+                <!-- Right Column: Controls & Step-by-Step Math (5 cols) -->
+                <div class="lg:col-span-5 flex flex-col gap-5">
+                    <!-- Controls Box -->
+                    <div class="glass-panel rounded-2xl p-5 space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="text-sm font-semibold text-white">Parameter Pengukuran</h3>
+                            <div class="flex gap-1.5">
+                                <button onclick="setEraPreset(800, 100, 12.63)" class="px-2 py-1 text-[11px] bg-slate-800 hover:bg-sky-500/20 hover:text-sky-300 text-slate-300 rounded-md border border-slate-700 transition">Syene–Alexandria</button>
+                                <button onclick="setEraPreset(665, 120, 12.69)" class="px-2 py-1 text-[11px] bg-slate-800 hover:bg-sky-500/20 hover:text-sky-300 text-slate-300 rounded-md border border-slate-700 transition">Pontianak–Jakarta</button>
+                            </div>
+                        </div>
+
+                        <!-- Slider 1: Distance d -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <label class="text-slate-300 font-medium">Jarak Utara-Selatan Kota A ke B ($d$)</label>
+                                <span id="era-val-d" class="font-mono text-sky-400 font-semibold">800 km</span>
+                            </div>
+                            <input type="range" id="era-slider-d" min="200" max="2500" step="5" value="800" oninput="updateEratosthenes('d')">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                                <span>200 km</span>
+                                <span>1.350 km</span>
+                                <span>2.500 km</span>
+                            </div>
+                        </div>
+
+                        <!-- Slider 2: Stick Height H -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <label class="text-slate-300 font-medium">Tinggi Tongkat Gnomon ($H$)</label>
+                                <span id="era-val-h" class="font-mono text-sky-400 font-semibold">100 cm</span>
+                            </div>
+                            <input type="range" id="era-slider-h" min="50" max="200" step="1" value="100" oninput="updateEratosthenes('h')">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                                <span>50 cm</span>
+                                <span>125 cm</span>
+                                <span>200 cm</span>
+                            </div>
+                        </div>
+
+                        <!-- Slider 3: Shadow Length L -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <label class="text-slate-300 font-medium">Panjang Bayangan di Kota B ($L$)</label>
+                                <span id="era-val-l" class="font-mono text-amber-400 font-semibold">12,63 cm</span>
+                            </div>
+                            <input type="range" id="era-slider-l" min="2" max="80" step="0.05" value="12.63" oninput="updateEratosthenes('l')">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                                <span>2 cm</span>
+                                <span>40 cm</span>
+                                <span>80 cm</span>
+                            </div>
+                        </div>
+
+                        <!-- Auto-sync toggle button -->
+                        <div class="pt-1 flex items-center justify-between text-xs bg-slate-900/70 p-2.5 rounded-xl border border-slate-800/80">
+                            <span class="text-slate-400">Sesuaikan bayangan otomatis dengan Bumi nyata?</span>
+                            <button onclick="syncEraRealEarth()" class="px-3 py-1 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 rounded-lg font-medium transition">
+                                Kalibrasi Presisi
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-Step Math Explanation -->
+                    <div class="glass-panel rounded-2xl p-5 flex-1 flex flex-col justify-between space-y-3">
+                        <h3 class="text-sm font-semibold text-white border-b border-slate-800 pb-2">Penjabaran Rumus & Langkah Perhitungan</h3>
+                        <div class="space-y-2.5 text-xs font-mono bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80 text-slate-300">
+                            <div>
+                                <span class="text-slate-500 block">// 1. Hitung sudut bayangan (Δθ) dari tinggi tongkat & bayangan:</span>
+                                <span id="era-step-1" class="text-amber-300">Δθ = arctan(12,63 / 100) = 7,20°</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 block">// 2. Bandingkan sudut busur dengan satu lingkaran penuh (360°):</span>
+                                <span id="era-step-2" class="text-sky-300">K = d × (360° / Δθ) = 800 × (360° / 7,20°) = 40.000,0 km</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 block">// 3. Hitung jari-jari Bumi (R = K / 2π):</span>
+                                <span id="era-step-3" class="text-emerald-300">R = 40.000,0 / (2 × 3,14159) = 6.366,2 km</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 2: METODE AL-BIRUNI
+             ========================================== -->
+        <section id="tab-albiruni" class="space-y-6 hidden">
+            <!-- Top Metric Summary Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div class="glass-panel p-4 rounded-2xl">
+                    <span class="text-xs text-slate-400 block">Sudut Depresi ($\alpha$)</span>
+                    <span id="bir-card-angle" class="text-xl sm:text-2xl font-bold font-mono text-amber-400 mt-1 block">1,015°</span>
+                    <span class="text-[11px] text-slate-500">Kemiringan Cakrawala</span>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl">
+                    <span class="text-xs text-slate-400 block">Jarak Pandang Cakrawala ($d_c$)</span>
+                    <span id="bir-card-horizon" class="text-xl sm:text-2xl font-bold font-mono text-sky-400 mt-1 block">112,9 km</span>
+                    <span class="text-[11px] text-slate-500">Garis Singgung $AC$</span>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl">
+                    <span class="text-xs text-slate-400 block">Jari-Jari Bumi ($r$)</span>
+                    <span id="bir-card-radius" class="text-xl sm:text-2xl font-bold font-mono text-emerald-400 mt-1 block">6.368,4 km</span>
+                    <span class="text-[11px] text-slate-500">Aktual: $6.371,0\text{ km}$</span>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl">
+                    <span class="text-xs text-slate-400 block">Persentase Galat (Error)</span>
+                    <span id="bir-card-error" class="text-xl sm:text-2xl font-bold font-mono text-teal-300 mt-1 block">0,04%</span>
+                    <span class="text-[11px] text-emerald-400">Presisi Trigonometri</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Column: Canvas Visualization -->
+                <div class="lg:col-span-7 glass-panel rounded-2xl p-4 flex flex-col justify-between min-h-[420px] sm:min-h-[480px]">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <h2 class="text-sm font-semibold text-white">Geometri Garis Singgung Cakrawala dari Puncak Gunung</h2>
+                            <p class="text-xs text-slate-400">Garis pandang ke cakrawala ($AC$) selalu tegak lurus ($90^\circ$) terhadap jari-jari Bumi ($OC$).</p>
+                        </div>
+                        <span class="px-2.5 py-1 text-[11px] font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full">Abad ke-11 M</span>
+                    </div>
+                    <div class="relative w-full h-[360px] sm:h-[420px] rounded-xl overflow-hidden bg-slate-950/70 border border-slate-800/80">
+                        <canvas id="canvas-albiruni"></canvas>
+                    </div>
+                </div>
+
+                <!-- Right Column: Controls & Math -->
+                <div class="lg:col-span-5 flex flex-col gap-5">
+                    <div class="glass-panel rounded-2xl p-5 space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="text-sm font-semibold text-white">Parameter Pengamatan Gunung</h3>
+                            <div class="flex gap-1.5">
+                                <button onclick="setBiruniPreset(650, 0.820)" class="px-2 py-1 text-[11px] bg-slate-800 hover:bg-sky-500/20 hover:text-sky-300 text-slate-300 rounded-md border border-slate-700 transition">Benteng Nandana</button>
+                                <button onclick="setBiruniPreset(3142, 1.800)" class="px-2 py-1 text-[11px] bg-slate-800 hover:bg-sky-500/20 hover:text-sky-300 text-slate-300 rounded-md border border-slate-700 transition">Gn. Agung (Bali)</button>
+                            </div>
+                        </div>
+
+                        <!-- Slider 1: Mountain Height h (meters) -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <label class="text-slate-300 font-medium">Ketinggian Puncak Gunung ($h$)</label>
+                                <span id="bir-val-h" class="font-mono text-sky-400 font-semibold">1.000 m (1,00 km)</span>
+                            </div>
+                            <input type="range" id="bir-slider-h" min="100" max="5000" step="10" value="1000" oninput="updateAlBiruni('h')">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                                <span>100 m (Bukit)</span>
+                                <span>2.500 m</span>
+                                <span>5.000 m (Pegunungan)</span>
+                            </div>
+                        </div>
+
+                        <!-- Slider 2: Horizon Dip Angle alpha (degrees) -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <label class="text-slate-300 font-medium">Sudut Kemiringan Cakrawala ($\alpha$)</label>
+                                <span id="bir-val-alpha" class="font-mono text-amber-400 font-semibold">1,015°</span>
+                            </div>
+                            <input type="range" id="bir-slider-alpha" min="0.25" max="2.50" step="0.005" value="1.015" oninput="updateAlBiruni('alpha')">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                                <span>0,25°</span>
+                                <span>1,35°</span>
+                                <span>2,50°</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-1 flex items-center justify-between text-xs bg-slate-900/70 p-2.5 rounded-xl border border-slate-800/80">
+                            <span class="text-slate-400">Sesuaikan sudut $\alpha$ ideal untuk ketinggian ini?</span>
+                            <button onclick="syncBiruniRealEarth()" class="px-3 py-1 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 rounded-lg font-medium transition">
+                                Kalibrasi Astrolab
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-Step Math -->
+                    <div class="glass-panel rounded-2xl p-5 flex-1 flex flex-col justify-between space-y-3">
+                        <h3 class="text-sm font-semibold text-white border-b border-slate-800 pb-2">Penjabaran Rumus Trigonometri Al-Biruni</h3>
+                        <div class="space-y-2.5 text-xs font-mono bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80 text-slate-300">
+                            <div>
+                                <span class="text-slate-500 block">// 1. Segitiga siku-siku OCA memenuhi cos(α) = r / (r + h):</span>
+                                <span id="bir-step-1" class="text-amber-300">cos(1,015°) = 0,99984315</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 block">// 2. Hitung selisih penyebut (1 - cos(α)):</span>
+                                <span id="bir-step-2" class="text-sky-300">1 - cos(1,015°) = 0,00015685</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 block">// 3. Rumus Jari-Jari Bumi r = (h × cos(α)) / (1 - cos(α)):</span>
+                                <span id="bir-step-3" class="text-emerald-300">r = (1,00 km × 0,999843) / 0,000157 = 6.368,4 km</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 3: METODE DUA KALI MATAHARI TERBENAM
+             ========================================== -->
+        <section id="tab-sunset" class="space-y-6 hidden">
+            <!-- Top Metric Summary Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div class="glass-panel p-4 rounded-2xl">
+                    <span class="text-xs text-slate-400 block">Waktu Tunda ($\Delta t$)</span>
+                    <span id="sun-card-time" class="text-xl sm:text-2xl font-bold font-mono text-amber-400 mt-1 block">11,10 dtk</span>
+                    <span class="text-[11px] text-slate-500">Berbaring $\rightarrow$ Berdiri</span>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl">
+                    <span class="text-xs text-slate-400 block">Sudut Rotasi Bumi ($\theta$)</span>
+                    <span id="sun-card-angle" class="text-xl sm:text-2xl font-bold font-mono text-sky-400 mt-1 block">0,0462°</span>
+                    <span class="text-[11px] text-slate-500">$\theta = 2\pi \cdot \Delta t / 86.400$</span>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl">
+                    <span class="text-xs text-slate-400 block">Jari-Jari Bumi ($R$)</span>
+                    <span id="sun-card-radius" class="text-xl sm:text-2xl font-bold font-mono text-emerald-400 mt-1 block">6.365,8 km</span>
+                    <span id="sun-card-refrac-label" class="text-[11px] text-sky-400">Dengan Koreksi Refraksi</span>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl">
+                    <span class="text-xs text-slate-400 block">Persentase Galat (Error)</span>
+                    <span id="sun-card-error" class="text-xl sm:text-2xl font-bold font-mono text-teal-300 mt-1 block">0,08%</span>
+                    <span class="text-[11px] text-slate-500">Terhadap $6.371\text{ km}$</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Column: Interactive Beach Sunset Simulator & Stopwatch -->
+                <div class="lg:col-span-7 glass-panel rounded-2xl p-4 flex flex-col justify-between min-h-[440px]">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <div>
+                            <h2 class="text-sm font-semibold text-white">Simulasi Langsung: Eksperimen Pantai & Stopwatch</h2>
+                            <p class="text-xs text-slate-400" id="sun-instruction-text">Tekan tombol di bawah untuk memulai simulasi Matahari terbenam sambil berbaring di tepi pantai.</p>
+                        </div>
+                        <span id="sun-posture-badge" class="px-2.5 py-1 text-[11px] font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20 rounded-full">Posisi: Berbaring (0 m)</span>
+                    </div>
+
+                    <!-- Interactive Canvas Horizon View -->
+                    <div class="relative w-full h-[320px] sm:h-[350px] rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
+                        <canvas id="canvas-sunset"></canvas>
+
+                        <!-- Floating Stopwatch Overlay inside Canvas -->
+                        <div class="absolute top-3 right-3 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl px-3.5 py-2 text-right shadow-xl">
+                            <span class="text-[10px] uppercase tracking-wider text-slate-400 block">Stopwatch Eksperimen</span>
+                            <span id="sun-live-stopwatch" class="text-2xl font-mono font-bold text-amber-400">00,00 s</span>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Action Bar for Experiment -->
+                    <div class="mt-3 flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                        <div class="flex items-center gap-2">
+                            <button id="btn-sunset-action" onclick="handleSunsetExperimentStep()" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white shadow-lg shadow-orange-500/20 transition">
+                                ▶ Mulai Simulasi Sunset (Berbaring)
+                            </button>
+                            <button onclick="resetSunsetSimulation()" class="px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                Reset
+                            </button>
+                        </div>
+                        <div class="text-xs text-slate-400 font-mono" id="sun-sim-status">
+                            Status: Siap mengamati cakrawala barat
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Controls & Math -->
+                <div class="lg:col-span-5 flex flex-col gap-5">
+                    <div class="glass-panel rounded-2xl p-5 space-y-4">
+                        <h3 class="text-sm font-semibold text-white border-b border-slate-800 pb-3">Parameter Fisika & Atmosfer</h3>
+
+                        <!-- Slider 1: Observer Eye Height h (m) -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <label class="text-slate-300 font-medium">Perubahan Tinggi Mata Pengamat ($h$)</label>
+                                <span id="sun-val-h" class="font-mono text-sky-400 font-semibold">1,70 m</span>
+                            </div>
+                            <input type="range" id="sun-slider-h" min="1.20" max="2.50" step="0.02" value="1.70" oninput="updateSunsetMath('h')">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                                <span>1,20 m (Anak-anak)</span>
+                                <span>1,70 m (Dewasa)</span>
+                                <span>2,50 m (Atas Bangku)</span>
+                            </div>
+                        </div>
+
+                        <!-- Slider 2: Stopwatch Delay dt (seconds) -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <label class="text-slate-300 font-medium">Waktu Tunda Stopwatch ($\Delta t$)</label>
+                                <span id="sun-val-dt" class="font-mono text-amber-400 font-semibold">11,10 detik</span>
+                            </div>
+                            <input type="range" id="sun-slider-dt" min="6.0" max="18.0" step="0.05" value="11.10" oninput="updateSunsetMath('dt')">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                                <span>6,0 dtk</span>
+                                <span>11,1 dtk</span>
+                                <span>18,0 dtk</span>
+                            </div>
+                        </div>
+
+                        <!-- Toggle Atmospheric Refraction Correction -->
+                        <div class="pt-1 flex items-center justify-between bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                            <div>
+                                <span class="text-xs font-medium text-white block">Koreksi Refraksi Atmosfer ($k \approx 0,82$)</span>
+                                <span class="text-[11px] text-slate-400">Pembiasan udara memperlambat sunset ~10%</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="sun-toggle-refraction" class="sr-only peer" checked onchange="updateSunsetMath('refrac')">
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-Step Math -->
+                    <div class="glass-panel rounded-2xl p-5 flex-1 flex flex-col justify-between space-y-3">
+                        <h3 class="text-sm font-semibold text-white border-b border-slate-800 pb-2">Penjabaran Rumus Rotasi & Cakrawala</h3>
+                        <div class="space-y-2.5 text-xs font-mono bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80 text-slate-300">
+                            <div>
+                                <span class="text-slate-500 block">// 1. Sudut rotasi Bumi selama Δt detik (T = 86.400 dtk):</span>
+                                <span id="sun-step-1" class="text-amber-300">θ = (2π × 11,10) / 86.400 = 0,0008072 rad</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 block">// 2. Rumus geometri vakum murni (R_mentah = 2h / θ²):</span>
+                                <span id="sun-step-2" class="text-sky-300">R_mentah = (2 × 1,70 m) / (0,0008072)² = 5.218,0 km</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 block">// 3. Hasil akhir setelah faktor refraksi atmosfer:</span>
+                                <span id="sun-step-3" class="text-emerald-300">R_koreksi = 5.218,0 / 0,8197 = 6.365,8 km</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-space-900 py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+            <span>Referensi Jari-Jari Rata-Rata Bumi (IUGG): <strong class="text-slate-300 font-mono">6.371,0 km</strong> | Keliling Meridional: <strong class="text-slate-300 font-mono">40.007,86 km</strong></span>
+            <span>Gunakan penggeser (slider) untuk menguji sensitivitas galat pengukuran.</span>
+        </div>
+    </footer>
+
+    <!-- Complete Interactive JavaScript Logic -->
+    <script>
+        const R_ACTUAL = 6371.0; // km
+        let activeTab = 'eratosthenes';
+        let sunRayOffset = 0;
+
+        // ==========================================
+        // TAB NAVIGATION LOGIC
+        // ==========================================
+        function switchTab(tabId) {
+            activeTab = tabId;
+            const tabs = ['eratosthenes', 'albiruni', 'sunset'];
+            tabs.forEach(t => {
+                const section = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (t === tabId) {
+                    section.classList.remove('hidden');
+                    btn.className = "tab-btn flex-1 md:flex-initial px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all bg-sky-500 text-white shadow-md shadow-sky-500/20";
+                } else {
+                    section.classList.add('hidden');
+                    btn.className = "tab-btn flex-1 md:flex-initial px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800";
+                }
+            });
+            resizeAllCanvases();
+        }
+
+        // ==========================================
+        // 1. ERATOSTHENES METHOD LOGIC & CANVAS
+        // ==========================================
+        function setEraPreset(d, h, l) {
+            document.getElementById('era-slider-d').value = d;
+            document.getElementById('era-slider-h').value = h;
+            document.getElementById('era-slider-l').value = l;
+            updateEratosthenes();
+        }
+
+        function syncEraRealEarth() {
+            const d = parseFloat(document.getElementById('era-slider-d').value);
+            const h = parseFloat(document.getElementById('era-slider-h').value);
+            // Ideal angle in radians = d / R_ACTUAL
+            const idealThetaRad = d / R_ACTUAL;
+            const idealL = h * Math.tan(idealThetaRad);
+            document.getElementById('era-slider-l').value = idealL.toFixed(2);
+            updateEratosthenes();
+        }
+
+        function updateEratosthenes() {
+            const d = parseFloat(document.getElementById('era-slider-d').value);
+            const h = parseFloat(document.getElementById('era-slider-h').value);
+            const l = parseFloat(document.getElementById('era-slider-l').value);
+
+            // Calculate shadow angle in radians and degrees
+            const thetaRad = Math.atan(l / h);
+            const thetaDeg = thetaRad * (180 / Math.PI);
+
+            // Calculate Earth Circumference K and Radius R
+            const K = d * (360 / thetaDeg);
+            const R = K / (2 * Math.PI);
+            const errorPct = Math.abs(R - R_ACTUAL) / R_ACTUAL * 100;
+
+            // Update UI Labels
+            document.getElementById('era-val-d').textContent = `${d.toLocaleString('id-ID')} km`;
+            document.getElementById('era-val-h').textContent = `${h.toLocaleString('id-ID')} cm`;
+            document.getElementById('era-val-l').textContent = `${l.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})} cm`;
+
+            document.getElementById('era-card-angle').textContent = `${thetaDeg.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}°`;
+            document.getElementById('era-card-circum').textContent = `${Math.round(K).toLocaleString('id-ID')} km`;
+            document.getElementById('era-card-radius').textContent = `${R.toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1})} km`;
+            document.getElementById('era-card-error').textContent = `${errorPct.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%`;
+
+            const statusEl = document.getElementById('era-card-status');
+            if (errorPct < 1.5) {
+                statusEl.textContent = "Akurasi Sangat Tinggi";
+                statusEl.className = "text-[11px] text-emerald-400";
+            } else if (errorPct < 10) {
+                statusEl.textContent = "Akurasi Menengah";
+                statusEl.className = "text-[11px] text-amber-400";
+            } else {
+                statusEl.textContent = "Penyimpangan Besar";
+                statusEl.className = "text-[11px] text-rose-400";
+            }
+
+            // Update Formula Breakdown
+            document.getElementById('era-step-1').textContent =
+                `Δθ = arctan(${l.toFixed(2)} / ${h}) = ${thetaDeg.toFixed(2)}°`;
+            document.getElementById('era-step-2').textContent =
+                `K = ${d} × (360° / ${thetaDeg.toFixed(2)}°) = ${K.toLocaleString('id-ID', {maximumFractionDigits: 1})} km`;
+            document.getElementById('era-step-3').textContent =
+                `R = ${K.toLocaleString('id-ID', {maximumFractionDigits: 1})} / 2π = ${R.toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1})} km`;
+
+            drawEratosthenesCanvas(d, h, l, thetaDeg);
+        }
+
+        function drawEratosthenesCanvas(d, h, l, thetaDeg) {
+            const canvas = document.getElementById('canvas-eratosthenes');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+            ctx.clearRect(0, 0, W, H);
+
+            // Center of Earth on the left-center
+            const cx = W * 0.34;
+            const cy = H * 0.56;
+            const earthRadiusPx = Math.min(W, H) * 0.31;
+
+            // Visual exaggeration of angle slightly when very small so user can clearly see geometry
+            const visualAngleRad = Math.min(Math.max(thetaDeg * (Math.PI / 180) * 2.2, 0.12), 1.15);
+
+            // 1. Draw Parallel Sunbeams from the right
+            ctx.save();
+            ctx.strokeStyle = 'rgba(251, 191, 36, 0.22)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([8, 8]);
+            ctx.lineDashOffset = -sunRayOffset;
+            for (let y = 30; y < H - 20; y += 34) {
+                ctx.beginPath();
+                ctx.moveTo(W, y);
+                ctx.lineTo(20, y);
+                ctx.stroke();
+
+                // Little arrow heads on sun rays
+                ctx.fillStyle = 'rgba(251, 191, 36, 0.45)';
+                ctx.beginPath();
+                ctx.moveTo(W - 55, y);
+                ctx.lineTo(W - 45, y - 4);
+                ctx.lineTo(W - 45, y + 4);
+                ctx.fill();
+            }
+            ctx.restore();
+
+            // Label Sinar Matahari
+            ctx.fillStyle = '#FBBF24';
+            ctx.font = '600 11px Inter, sans-serif';
+            ctx.fillText('☀ Sinar Matahari Sejajar', W - 155, 24);
+
+            // 2. Draw Earth Circle
+            const earthGrad = ctx.createRadialGradient(cx - 20, cy - 20, 10, cx, cy, earthRadiusPx);
+            earthGrad.addColorStop(0, '#1E3A8A');
+            earthGrad.addColorStop(0.75, '#0F172A');
+            earthGrad.addColorStop(1, '#0284C7');
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, earthRadiusPx, 0, Math.PI * 2);
+            ctx.fillStyle = earthGrad;
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#38BDF8';
+            ctx.stroke();
+
+            // 3. Draw City A (at angle 0, facing right directly to the Sun)
+            const stickLenPx = 36;
+            const ax = cx + earthRadiusPx;
+            const ay = cy;
+
+            // Radius line O to City A
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(ax + stickLenPx, ay);
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Stick at City A
+            ctx.beginPath();
+            ctx.moveTo(ax, ay);
+            ctx.lineTo(ax + stickLenPx, ay);
+            ctx.strokeStyle = '#F8FAFC';
+            ctx.lineWidth = 3.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#38BDF8';
+            ctx.font = 'bold 11px Inter, sans-serif';
+            ctx.fillText('Kota A (0°)', ax - 68, ay + 16);
+
+            // 4. Draw City B (at angle -visualAngleRad)
+            const bx = cx + earthRadiusPx * Math.cos(-visualAngleRad);
+            const by = cy + earthRadiusPx * Math.sin(-visualAngleRad);
+            const bTipX = cx + (earthRadiusPx + stickLenPx) * Math.cos(-visualAngleRad);
+            const bTipY = cy + (earthRadiusPx + stickLenPx) * Math.sin(-visualAngleRad);
+
+            // Radius line O to City B
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(bTipX, bTipY);
+            ctx.strokeStyle = '#F59E0B';
+            ctx.lineWidth = 1.8;
+            ctx.stroke();
+
+            // Stick at City B
+            ctx.beginPath();
+            ctx.moveTo(bx, by);
+            ctx.lineTo(bTipX, bTipY);
+            ctx.strokeStyle = '#FDE047';
+            ctx.lineWidth = 3.5;
+            ctx.stroke();
+
+            // Highlight Arc d on surface between A and B
+            ctx.beginPath();
+            ctx.arc(cx, cy, earthRadiusPx, -visualAngleRad, 0);
+            ctx.strokeStyle = '#10B981';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            // Label arc d
+            const midAngle = -visualAngleRad / 2;
+            const labelDx = cx + (earthRadiusPx + 18) * Math.cos(midAngle);
+            const labelDy = cy + (earthRadiusPx + 18) * Math.sin(midAngle);
+            ctx.fillStyle = '#34D399';
+            ctx.font = 'bold 11px JetBrains Mono, monospace';
+            ctx.fillText(`d=${d}km`, labelDx + 4, labelDy);
+
+            // Angle arc at Earth Center O
+            ctx.beginPath();
+            ctx.arc(cx, cy, 42, -visualAngleRad, 0);
+            ctx.strokeStyle = '#FBBF24';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = '#FBBF24';
+            ctx.font = 'bold 11px JetBrains Mono, monospace';
+            ctx.fillText(`Δθ=${thetaDeg.toFixed(1)}°`, cx + 46, cy - 8);
+
+            // Center point O
+            ctx.beginPath();
+            ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fill();
+            ctx.fillStyle = '#94A3B8';
+            ctx.fillText('Pusat O', cx - 48, cy + 4);
+
+            // 5. Draw Zoom-in Inset Box of Stick & Shadow at City B (Top-Left)
+            const boxX = 14;
+            const boxY = 14;
+            const boxW = 165;
+            const boxH = 145;
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.roundRect(boxX, boxY, boxW, boxH, 10);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#E2E8F0';
+            ctx.font = '600 11px Inter, sans-serif';
+            ctx.fillText('Zoom Tongkat Kota B', boxX + 12, boxY + 20);
+
+            // Draw zoomed vertical stick & horizontal shadow
+            const zBaseX = boxX + 45;
+            const zBaseY = boxY + 122;
+            const zStickH = 75;
+            const zShadowL = Math.min(Math.max((l / h) * zStickH * 1.8, 12), 95);
+
+            // Ground
+            ctx.beginPath();
+            ctx.moveTo(boxX + 20, zBaseY);
+            ctx.lineTo(boxX + boxW - 15, zBaseY);
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Shadow L on ground
+            ctx.beginPath();
+            ctx.moveTo(zBaseX, zBaseY);
+            ctx.lineTo(zBaseX + zShadowL, zBaseY);
+            ctx.strokeStyle = '#F43F5E';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Vertical Stick H
+            ctx.beginPath();
+            ctx.moveTo(zBaseX, zBaseY);
+            ctx.lineTo(zBaseX, zBaseY - zStickH);
+            ctx.strokeStyle = '#FDE047';
+            ctx.lineWidth = 3.5;
+            ctx.stroke();
+
+            // Sun ray hypotenuse
+            ctx.beginPath();
+            ctx.setLineDash([4, 3]);
+            ctx.moveTo(zBaseX, zBaseY - zStickH);
+            ctx.lineTo(zBaseX + zShadowL, zBaseY);
+            ctx.strokeStyle = '#FBBF24';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Labels H, L, theta
+            ctx.fillStyle = '#FDE047';
+            ctx.font = '10px JetBrains Mono, monospace';
+            ctx.fillText(`H=${h}cm`, zBaseX - 36, zBaseY - zStickH / 2);
+            ctx.fillStyle = '#FB7185';
+            ctx.fillText(`L=${l.toFixed(1)}cm`, zBaseX + 4, zBaseY + 14);
+            ctx.fillStyle = '#FBBF24';
+            ctx.fillText(`Δθ=${thetaDeg.toFixed(1)}°`, zBaseX + 6, zBaseY - zStickH + 14);
+        }
+
+        // ==========================================
+        // 2. AL-BIRUNI METHOD LOGIC & CANVAS
+        // ==========================================
+        function setBiruniPreset(hMeters, alphaDeg) {
+            document.getElementById('bir-slider-h').value = hMeters;
+            document.getElementById('bir-slider-alpha').value = alphaDeg;
+            updateAlBiruni();
+        }
+
+        function syncBiruniRealEarth() {
+            const hMeters = parseFloat(document.getElementById('bir-slider-h').value);
+            const hKm = hMeters / 1000;
+            // cos(alpha) = R / (R + h)
+            const idealAlphaRad = Math.acos(R_ACTUAL / (R_ACTUAL + hKm));
+            const idealAlphaDeg = idealAlphaRad * (180 / Math.PI);
+            document.getElementById('bir-slider-alpha').value = idealAlphaDeg.toFixed(3);
+            updateAlBiruni();
+        }
+
+        function updateAlBiruni() {
+            const hMeters = parseFloat(document.getElementById('bir-slider-h').value);
+            const hKm = hMeters / 1000;
+            const alphaDeg = parseFloat(document.getElementById('bir-slider-alpha').value);
+            const alphaRad = alphaDeg * (Math.PI / 180);
+
+            const cosAlpha = Math.cos(alphaRad);
+            const denom = 1 - cosAlpha;
+            const rCalc = (hKm * cosAlpha) / denom;
+            const horizonDist = Math.sqrt(Math.max(0, Math.pow(rCalc + hKm, 2) - Math.pow(rCalc, 2)));
+            const errorPct = Math.abs(rCalc - R_ACTUAL) / R_ACTUAL * 100;
+
+            // Update UI
+            document.getElementById('bir-val-h').textContent = `${hMeters.toLocaleString('id-ID')} m (${hKm.toFixed(2)} km)`;
+            document.getElementById('bir-val-alpha').textContent = `${alphaDeg.toLocaleString('id-ID', {minimumFractionDigits: 3})}°`;
+
+            document.getElementById('bir-card-angle').textContent = `${alphaDeg.toLocaleString('id-ID', {minimumFractionDigits: 3})}°`;
+            document.getElementById('bir-card-horizon').textContent = `${horizonDist.toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1})} km`;
+            document.getElementById('bir-card-radius').textContent = `${rCalc.toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1})} km`;
+            document.getElementById('bir-card-error').textContent = `${errorPct.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%`;
+
+            // Update Steps
+            document.getElementById('bir-step-1').textContent =
+                `cos(${alphaDeg.toFixed(3)}°) = ${cosAlpha.toFixed(8)}`;
+            document.getElementById('bir-step-2').textContent =
+                `1 - cos(${alphaDeg.toFixed(3)}°) = ${denom.toFixed(8)}`;
+            document.getElementById('bir-step-3').textContent =
+                `r = (${hKm.toFixed(2)} km × ${cosAlpha.toFixed(6)}) / ${denom.toFixed(6)} = ${rCalc.toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1})} km`;
+
+            drawAlBiruniCanvas(hMeters, alphaDeg, rCalc, horizonDist);
+        }
+
+        function drawAlBiruniCanvas(hMeters, alphaDeg, rCalc, horizonDist) {
+            const canvas = document.getElementById('canvas-albiruni');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+            ctx.clearRect(0, 0, W, H);
+
+            // Earth center at bottom center
+            const cx = W * 0.45;
+            const cy = H * 0.78;
+            const earthR = Math.min(W, H) * 0.48;
+
+            // Exaggerate mountain height so triangle OCA is clearly visible
+            const mountainPx = 38 + (hMeters / 5000) * 55;
+            const peakX = cx;
+            const peakY = cy - earthR - mountainPx;
+
+            // Compute tangent angle on our visual circle: cos(theta) = earthR / (earthR + mountainPx)
+            const visualAlpha = Math.acos(earthR / (earthR + mountainPx));
+            const tanX = cx + earthR * Math.sin(visualAlpha);
+            const tanY = cy - earthR * Math.cos(visualAlpha);
+
+            // 1. Draw Earth Globe
+            const grad = ctx.createRadialGradient(cx, cy - earthR * 0.3, 20, cx, cy, earthR);
+            grad.addColorStop(0, '#1E3A8A');
+            grad.addColorStop(1, '#0F172A');
+            ctx.beginPath();
+            ctx.arc(cx, cy, earthR, 0, Math.PI * 2);
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#38BDF8';
+            ctx.stroke();
+
+            // 2. Draw Mountain Peak B -> A
+            ctx.beginPath();
+            ctx.moveTo(cx - 28, cy - earthR + 3);
+            ctx.lineTo(peakX, peakY);
+            ctx.lineTo(cx + 28, cy - earthR + 3);
+            ctx.closePath();
+            ctx.fillStyle = '#475569';
+            ctx.fill();
+            ctx.strokeStyle = '#94A3B8';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 3. Draw Vertical Line O -> B -> A
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(peakX, peakY);
+            ctx.strokeStyle = '#38BDF8';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 4. Draw Radius O -> C (Tangent point)
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(tanX, tanY);
+            ctx.strokeStyle = '#10B981';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 5. Draw Horizontal Reference Line from Peak A
+            ctx.beginPath();
+            ctx.setLineDash([6, 4]);
+            ctx.moveTo(peakX, peakY);
+            ctx.lineTo(peakX + 190, peakY);
+            ctx.strokeStyle = '#94A3B8';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 6. Draw Line of Sight from Peak A to Horizon C (and slightly beyond)
+            const dx = tanX - peakX;
+            const dy = tanY - peakY;
+            ctx.beginPath();
+            ctx.moveTo(peakX, peakY);
+            ctx.lineTo(peakX + dx * 1.25, peakY + dy * 1.25);
+            ctx.strokeStyle = '#FBBF24';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Right angle symbol at C (90 deg)
+            ctx.beginPath();
+            ctx.arc(tanX, tanY, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#F43F5E';
+            ctx.fill();
+
+            // Dip angle arc at Peak A
+            const sightAngle = Math.atan2(dy, dx);
+            ctx.beginPath();
+            ctx.arc(peakX, peakY, 55, 0, sightAngle);
+            ctx.strokeStyle = '#FBBF24';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Angle arc at Center O
+            ctx.beginPath();
+            ctx.arc(cx, cy, 45, -Math.PI / 2, -Math.PI / 2 + visualAlpha);
+            ctx.strokeStyle = '#FBBF24';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Labels
+            ctx.font = 'bold 11px JetBrains Mono, monospace';
+            ctx.fillStyle = '#FBBF24';
+            ctx.fillText(`Sudut Depresi α = ${alphaDeg.toFixed(3)}°`, peakX + 62, peakY + 18);
+            ctx.fillText(`α`, cx + 12, cy - 52);
+
+            ctx.fillStyle = '#F8FAFC';
+            ctx.fillText(`Puncak A (h = ${hMeters} m)`, peakX - 135, peakY + 5);
+            ctx.fillStyle = '#38BDF8';
+            ctx.fillText('Kaki Gunung B', cx - 95, cy - earthR - 4);
+            ctx.fillStyle = '#FB7185';
+            ctx.fillText('Titik Cakrawala C (90°)', tanX + 10, tanY - 4);
+            ctx.fillStyle = '#34D399';
+            ctx.fillText(`Jari-jari r`, cx + (tanX - cx) * 0.5 + 8, cy + (tanY - cy) * 0.5);
+            ctx.fillStyle = '#E2E8F0';
+            ctx.fillText('Pusat Bumi O', cx - 40, cy + 18);
+        }
+
+        // ==========================================
+        // 3. DOUBLE SUNSET BEACH STOPWATCH METHOD
+        // ==========================================
+        let sunsetState = 'idle'; // 'idle', 'sinking_1', 'waiting_stand', 'sinking_2', 'done'
+        let sunYOffset = -18;     // Negative = above horizon, Positive = below horizon
+        let stopwatchRunning = false;
+        let stopwatchTime = 0;
+        let lastFrameTime = performance.now();
+
+        function updateSunsetMath(source) {
+            const h = parseFloat(document.getElementById('sun-slider-h').value);
+            const dt = parseFloat(document.getElementById('sun-slider-dt').value);
+            const useRefraction = document.getElementById('sun-toggle-refraction').checked;
+
+            const T = 86400; // seconds in 24h solar day
+            const thetaRad = (2 * Math.PI * dt) / T;
+            const thetaDeg = thetaRad * (180 / Math.PI);
+
+            // Raw radius in meters: R = 2h / theta^2
+            const rRawMeters = (2 * h) / (thetaRad * thetaRad);
+            const rRawKm = rRawMeters / 1000;
+
+            // Atmospheric refraction correction factor (~0.8197 at horizon)
+            const refractionFactor = 0.8197;
+            const rFinalKm = useRefraction ? (rRawKm / refractionFactor) : rRawKm;
+            const errorPct = Math.abs(rFinalKm - R_ACTUAL) / R_ACTUAL * 100;
+
+            // Update UI
+            document.getElementById('sun-val-h').textContent = `${h.toLocaleString('id-ID', {minimumFractionDigits: 2})} m`;
+            document.getElementById('sun-val-dt').textContent = `${dt.toLocaleString('id-ID', {minimumFractionDigits: 2})} detik`;
+
+            document.getElementById('sun-card-time').textContent = `${dt.toLocaleString('id-ID', {minimumFractionDigits: 2})} dtk`;
+            document.getElementById('sun-card-angle').textContent = `${thetaDeg.toLocaleString('id-ID', {minimumFractionDigits: 4})}°`;
+            document.getElementById('sun-card-radius').textContent = `${rFinalKm.toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1})} km`;
+            document.getElementById('sun-card-error').textContent = `${errorPct.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%`;
+
+            const refLabel = document.getElementById('sun-card-refrac-label');
+            if (useRefraction) {
+                refLabel.textContent = "Dengan Koreksi Refraksi";
+                refLabel.className = "text-[11px] text-sky-400";
+            } else {
+                refLabel.textContent = "Tanpa Koreksi (Geometri Vakum)";
+                refLabel.className = "text-[11px] text-amber-400";
+            }
+
+            // Formula steps
+            document.getElementById('sun-step-1').textContent =
+                `θ = (2π × ${dt.toFixed(2)}) / 86.400 = ${thetaRad.toFixed(7)} rad`;
+            document.getElementById('sun-step-2').textContent =
+                `R_mentah = (2 × ${h.toFixed(2)} m) / (${thetaRad.toFixed(6)})² = ${rRawKm.toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1})} km`;
+            document.getElementById('sun-step-3').textContent = useRefraction
+                ? `R_koreksi = ${rRawKm.toFixed(1)} / 0,8197 = ${rFinalKm.toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1})} km`
+                : `R_akhir = ${rRawKm.toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1})} km (Refraksi dinonaktifkan)`;
+        }
+
+        function handleSunsetExperimentStep() {
+            const btn = document.getElementById('btn-sunset-action');
+            const badge = document.getElementById('sun-posture-badge');
+            const status = document.getElementById('sun-sim-status');
+            const h = parseFloat(document.getElementById('sun-slider-h').value);
+
+            if (sunsetState === 'idle' || sunsetState === 'done') {
+                // Start lying down watching first sunset
+                sunsetState = 'sinking_1';
+                sunYOffset = -14;
+                stopwatchTime = 0;
+                stopwatchRunning = false;
+                document.getElementById('sun-live-stopwatch').textContent = "00,00 s";
+                badge.textContent = "Posisi: Berbaring (Mata 0 m)";
+                badge.className = "px-2.5 py-1 text-[11px] font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20 rounded-full";
+                btn.textContent = "⏳ Menunggu Matahari Terbenam #1...";
+                btn.disabled = true;
+                btn.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-slate-700 text-slate-300 cursor-not-allowed";
+                status.textContent = "Matahari perlahan tenggelam di cakrawala...";
+            } else if (sunsetState === 'waiting_stand') {
+                // User clicks to Stand Up! Sun pops back above horizon
+                sunsetState = 'sinking_2';
+                sunYOffset = -11.1 * 2.2; // Jumps back up proportional to eye height
+                badge.textContent = `Posisi: Berdiri Tegak (Mata +${h.toFixed(2)} m)`;
+                badge.className = "px-2.5 py-1 text-[11px] font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 rounded-full";
+                btn.textContent = "⏹ Hentikan Stopwatch (Saat Sunset #2)";
+                btn.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20 transition";
+                status.textContent = "Anda berdiri! Matahari terlihat kembali di atas laut.";
+            } else if (sunsetState === 'sinking_2') {
+                // Manual stop stopwatch
+                finishSunsetExperiment();
+            }
+        }
+
+        function finishSunsetExperiment() {
+            sunsetState = 'done';
+            stopwatchRunning = false;
+            const recordedDt = Math.min(Math.max(stopwatchTime, 6.0), 18.0);
+            document.getElementById('sun-slider-dt').value = recordedDt.toFixed(2);
+            updateSunsetMath('dt');
+
+            const btn = document.getElementById('btn-sunset-action');
+            btn.disabled = false;
+            btn.textContent = "🔄 Ulangi Eksperimen Pantai";
+            btn.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-sky-500 hover:bg-sky-400 text-white shadow-lg shadow-sky-500/20 transition";
+            document.getElementById('sun-sim-status').textContent = `Eksperimen selesai! Δt = ${recordedDt.toFixed(2)} dtk tercatat.`;
+        }
+
+        function resetSunsetSimulation() {
+            sunsetState = 'idle';
+            sunYOffset = -16;
+            stopwatchRunning = false;
+            stopwatchTime = 0;
+            document.getElementById('sun-live-stopwatch').textContent = "00,00 s";
+            const btn = document.getElementById('btn-sunset-action');
+            btn.disabled = false;
+            btn.textContent = "▶ Mulai Simulasi Sunset (Berbaring)";
+            btn.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white shadow-lg shadow-orange-500/20 transition";
+            document.getElementById('sun-sim-status').textContent = "Status: Siap mengamati cakrawala barat";
+        }
+
+        function drawSunsetCanvas(dtFrame) {
+            const canvas = document.getElementById('canvas-sunset');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+            ctx.clearRect(0, 0, W, H);
+
+            const horizonY = H * 0.62;
+            const sunRadius = 32;
+
+            // Update simulation physics if active
+            const hObserver = parseFloat(document.getElementById('sun-slider-h').value);
+            // Ideal time for current height hObserver
+            const idealDt = 11.10 * Math.sqrt(hObserver / 1.70);
+
+            if (sunsetState === 'sinking_1') {
+                sunYOffset += dtFrame * 9; // Sink speed before first sunset
+                if (sunYOffset >= sunRadius) {
+                    // Top edge of sun just vanished! Start stopwatch automatically
+                    sunYOffset = sunRadius;
+                    sunsetState = 'waiting_stand';
+                    stopwatchRunning = true;
+                    const btn = document.getElementById('btn-sunset-action');
+                    btn.disabled = false;
+                    btn.textContent = "🧍 SEGERA BERDIRI SEKARANG!";
+                    btn.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 animate-pulse shadow-lg shadow-emerald-500/30 transition";
+                    document.getElementById('sun-sim-status').textContent = "Sunset #1! Stopwatch menyala, klik 'Segera Berdiri'!";
+                }
+            } else if (sunsetState === 'waiting_stand') {
+                stopwatchTime += dtFrame;
+                sunYOffset += dtFrame * 2.0;
+            } else if (sunsetState === 'sinking_2') {
+                stopwatchTime += dtFrame;
+                // Move sun so it vanishes right around idealDt
+                const remainingTime = Math.max(0.2, idealDt - stopwatchTime);
+                const distToVanish = sunRadius - sunYOffset;
+                sunYOffset += (distToVanish / remainingTime) * dtFrame;
+
+                if (sunYOffset >= sunRadius) {
+                    sunYOffset = sunRadius;
+                    finishSunsetExperiment();
+                }
+            }
+
+            if (stopwatchRunning) {
+                document.getElementById('sun-live-stopwatch').textContent =
+                    stopwatchTime.toFixed(2).replace('.', ',') + ' s';
+            }
+
+            // 1. Sky Gradient
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
+            skyGrad.addColorStop(0, '#0F172A');
+            skyGrad.addColorStop(0.55, '#7C2D12');
+            skyGrad.addColorStop(1, '#F59E0B');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, W, horizonY);
+
+            // 2. Draw Setting Sun (Clipped at Horizon)
+            const sunCenterX = W * 0.5;
+            const sunCenterY = horizonY + sunYOffset;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(0, 0, W, horizonY);
+            ctx.clip();
+
+            // Sun Glow
+            const sunGlow = ctx.createRadialGradient(sunCenterX, sunCenterY, 5, sunCenterX, sunCenterY, sunRadius * 2.2);
+            sunGlow.addColorStop(0, 'rgba(254, 240, 138, 0.9)');
+            sunGlow.addColorStop(0.5, 'rgba(249, 115, 22, 0.45)');
+            sunGlow.addColorStop(1, 'rgba(249, 115, 22, 0)');
+            ctx.fillStyle = sunGlow;
+            ctx.beginPath();
+            ctx.arc(sunCenterX, sunCenterY, sunRadius * 2.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Sun Disk
+            ctx.beginPath();
+            ctx.arc(sunCenterX, sunCenterY, sunRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#FEF08A';
+            ctx.fill();
+            ctx.restore();
+
+            // 3. Draw Ocean Below Horizon
+            const seaGrad = ctx.createLinearGradient(0, horizonY, 0, H);
+            seaGrad.addColorStop(0, '#0369A1');
+            seaGrad.addColorStop(0.4, '#0F172A');
+            seaGrad.addColorStop(1, '#020617');
+            ctx.fillStyle = seaGrad;
+            ctx.fillRect(0, horizonY, W, H - horizonY);
+
+            // Horizon Line
+            ctx.beginPath();
+            ctx.moveTo(0, horizonY);
+            ctx.lineTo(W, horizonY);
+            ctx.strokeStyle = '#FBBF24';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Sun Shimmer on Ocean Waves
+            if (sunYOffset < sunRadius) {
+                ctx.fillStyle = 'rgba(251, 191, 36, 0.25)';
+                for (let i = 0; i < 6; i++) {
+                    const wY = horizonY + 8 + i * 12;
+                    const wW = (sunRadius - sunYOffset) * (1.8 - i * 0.2);
+                    ctx.fillRect(sunCenterX - wW / 2, wY, wW, 4);
+                }
+            }
+
+            // 4. Draw Observer Silhouette on the Beach (Bottom-Left)
+            const beachX = 75;
+            const beachY = H - 25;
+            ctx.strokeStyle = '#38BDF8';
+            ctx.lineWidth = 3;
+
+            if (sunsetState === 'sinking_2' || sunsetState === 'done') {
+                // Standing observer
+                ctx.beginPath();
+                ctx.arc(beachX, beachY - 48, 7, 0, Math.PI * 2); // Head
+                ctx.moveTo(beachX, beachY - 41);
+                ctx.lineTo(beachX, beachY - 18); // Body
+                ctx.lineTo(beachX - 8, beachY);  // Leg 1
+                ctx.moveTo(beachX, beachY - 18);
+                ctx.lineTo(beachX + 8, beachY);  // Leg 2
+                ctx.stroke();
+            } else {
+                // Lying down observer
+                ctx.beginPath();
+                ctx.arc(beachX + 38, beachY - 8, 7, 0, Math.PI * 2); // Head near ground
+                ctx.moveTo(beachX + 31, beachY - 6);
+                ctx.lineTo(beachX, beachY - 4); // Horizontal body
+                ctx.stroke();
+            }
+        }
+
+        // ==========================================
+        // RESPONSIVE CANVAS & ANIMATION LOOP
+        // ==========================================
+        function resizeAllCanvases() {
+            const ids = ['canvas-eratosthenes', 'canvas-albiruni', 'canvas-sunset'];
+            ids.forEach(id => {
+                const canvas = document.getElementById(id);
+                if (canvas && canvas.parentElement) {
+                    const rect = canvas.parentElement.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) {
+                        canvas.width = rect.width;
+                        canvas.height = rect.height;
+                    }
+                }
+            });
+            updateEratosthenes();
+            updateAlBiruni();
+            updateSunsetMath();
+        }
+
+        function animateLoop(now) {
+            const dt = (now - lastFrameTime) / 1000;
+            lastFrameTime = now;
+
+            sunRayOffset = (sunRayOffset + 0.35) % 16;
+
+            if (activeTab === 'eratosthenes') {
+                const d = parseFloat(document.getElementById('era-slider-d').value);
+                const h = parseFloat(document.getElementById('era-slider-h').value);
+                const l = parseFloat(document.getElementById('era-slider-l').value);
+                const thetaDeg = Math.atan(l / h) * (180 / Math.PI);
+                drawEratosthenesCanvas(d, h, l, thetaDeg);
+            } else if (activeTab === 'sunset') {
+                drawSunsetCanvas(dt);
+            }
+
+            requestAnimationFrame(animateLoop);
+        }
+
+        window.addEventListener('resize', resizeAllCanvases);
+        window.onload = function () {
+            resizeAllCanvases();
+            requestAnimationFrame(animateLoop);
+        };
+    </script>
+</body>
+</html>

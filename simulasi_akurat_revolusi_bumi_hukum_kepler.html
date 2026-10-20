@@ -1,0 +1,2129 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Revolusi Bumi - Skala Astrofisika & Hukum Kepler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        space: {
+                            950: '#04060d',
+                            900: '#0a0f1d',
+                            800: '#131c31',
+                            700: '#1e2942',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #04060d;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        /* Custom Range Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #1e2942;
+            height: 6px;
+            border-radius: 999px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            border: 2px solid #0f172a;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #7dd3fc;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.78);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+        }
+        canvas {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans selection:bg-sky-500 selection:text-white">
+
+    <header class="glass-panel sticky top-0 z-30 px-4 py-3 border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 via-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-base md:text-lg font-bold tracking-tight text-white">Simulasi Orbit Bumi & Hukum Kepler</h1>
+                        <span class="hidden sm:inline-block px-2 py-0.5 text-[11px] font-mono uppercase tracking-wider bg-sky-500/15 text-sky-400 border border-sky-500/30 rounded-full">Skala Presisi</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Eksentrisitas Asli <span class="font-mono text-slate-300">e = 0.0167086</span> • Matahari di Titik Fokus <span class="font-mono text-slate-300">F₁</span> • Persamaan Vis-Viva</p>
+                </div>
+            </div>
+
+            <!-- Quick Preset Buttons -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <!-- Mode Switcher Tabs -->
+                <div class="bg-space-900/90 p-1 rounded-xl border border-slate-800 flex items-center gap-1 mr-1">
+                    <button id="tabModeOrbit" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-500 text-slate-950 shadow transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+                        </svg>
+                        <span>1. Orbit & Kepler</span>
+                    </button>
+                    <button id="tabModeMeasureAU" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-amber-300 hover:bg-slate-800/80 transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        <span>2. Lab Hitung Jarak Bumi-Matahari (1 AU)</span>
+                    </button>
+                </div>
+
+                <div id="orbitPresetGroup" class="flex items-center gap-2 flex-wrap">
+                    <button id="btnJumpPerihelion" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        Ke Perihelion (3 Jan)
+                    </button>
+                    <button id="btnJumpAphelion" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 transition flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                        Ke Aphelion (4 Jul)
+                    </button>
+                    <button id="btnResetReal" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 transition">
+                        Reset Skala Asli 1:1
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ============================================================================ -->
+    <!-- VIEW 1: SIMULASI ORBIT BUMI & HUKUM KEPLER                                   -->
+    <!-- ============================================================================ -->
+    <main id="viewOrbitSection" class="flex-1 max-w-7xl w-full mx-auto p-3 md:p-5 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+
+        <!-- Left / Center Column: Interactive Orbit Canvas -->
+        <div class="lg:col-span-8 flex flex-col gap-3">
+            <div class="relative rounded-2xl overflow-hidden border border-slate-800 bg-space-950 shadow-2xl aspect-square sm:aspect-[16/11] w-full">
+                <canvas id="orbitCanvas" class="w-full h-full block"></canvas>
+
+                <!-- Floating Top-Left Live Badge -->
+                <div class="absolute top-3 left-3 flex flex-wrap items-center gap-2 pointer-events-none">
+                    <div class="glass-panel px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs">
+                        <span id="statusDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span id="simDateDisplay" class="font-mono font-semibold text-white">3 Januari (Hari ke-0.0)</span>
+                    </div>
+                    <div id="scaleModeBadge" class="glass-panel px-2.5 py-1.5 rounded-xl text-[11px] font-mono text-sky-300 border border-sky-500/30">
+                        Eksentrisitas: 0.0167 (Skala Asli 100%)
+                    </div>
+                </div>
+
+                <!-- Floating Top-Right Zoom & Pan Controls -->
+                <div class="absolute top-3 right-3 flex flex-col gap-1.5">
+                    <button id="btnZoomFocus" title="Perbesar ke Titik Fokus & Pusat Orbit" class="glass-panel hover:bg-slate-800/90 text-xs px-2.5 py-1.5 rounded-xl text-amber-300 border border-amber-500/30 transition flex items-center gap-1.5 shadow-lg">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+                        </svg>
+                        <span>Inspeksi Fokus (<span id="zoomStatusText">Off</span>)</span>
+                    </button>
+                </div>
+
+                <!-- Floating Bottom Legend inside Canvas -->
+                <div class="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+                    <div class="glass-panel px-3 py-1.5 rounded-xl flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-300">
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> Matahari (Fokus F₁)</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full border border-slate-400 inline-block"></span> Pusat Elips (O)</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-400 inline-block"></span> Fokus Kosong (F₂)</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 bg-emerald-400 inline-block"></span> Vektor Kecepatan (v)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Velocity & Distance Real-time Mini Graph -->
+            <div class="glass-panel rounded-2xl p-4 border border-slate-800/90">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <div>
+                        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-300">Kurva Kecepatan Revolusi Sepanjang Tahun (Hukum II Kepler)</h2>
+                        <p class="text-[11px] text-slate-400">Garis vertikal menandakan posisi Bumi saat ini terhadap kurva kecepatan <span class="font-mono text-emerald-400">v(θ)</span></p>
+                    </div>
+                    <div class="text-xs font-mono flex items-center gap-4">
+                        <span class="text-emerald-400">Maks (Perihelion): <strong id="vMaxLabel">30.29 km/s</strong></span>
+                        <span class="text-rose-400">Min (Aphelion): <strong id="vMinLabel">29.29 km/s</strong></span>
+                    </div>
+                </div>
+                <div class="w-full h-28 bg-space-950/90 rounded-xl border border-slate-800/80 overflow-hidden relative">
+                    <canvas id="graphCanvas" class="w-full h-full block"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-4 flex flex-col gap-4">
+
+            <!-- Real-time Telemetry Panel -->
+            <div class="glass-panel rounded-2xl p-4 border border-slate-800/90">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                        <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        Telemetri Orbit Real-Time
+                    </h2>
+                    <span class="text-[11px] font-mono text-slate-400">a = 149.60 Juta km</span>
+                </div>
+
+                <!-- Primary Metrics Grid -->
+                <div class="grid grid-cols-2 gap-2.5 mb-3">
+                    <div class="bg-space-900/90 border border-slate-800 rounded-xl p-3">
+                        <div class="text-[11px] text-slate-400 mb-0.5">Jarak ke Matahari (r)</div>
+                        <div class="text-base font-mono font-bold text-sky-400" id="valDistance">147.10 <span class="text-xs font-normal text-slate-400">jt km</span></div>
+                        <div class="text-[11px] font-mono text-slate-500 mt-0.5" id="valDistanceAU">0.9833 AU</div>
+                    </div>
+
+                    <div class="bg-space-900/90 border border-slate-800 rounded-xl p-3">
+                        <div class="text-[11px] text-slate-400 mb-0.5">Kecepatan Orbit (v)</div>
+                        <div class="text-base font-mono font-bold text-emerald-400" id="valVelocity">30.29 <span class="text-xs font-normal text-slate-400">km/s</span></div>
+                        <div class="text-[11px] font-mono text-slate-500 mt-0.5" id="valVelocityKmh">109,044 km/jam</div>
+                    </div>
+                </div>
+
+                <!-- Instantaneous Speed Gauge Bar -->
+                <div class="bg-space-900/90 border border-slate-800 rounded-xl p-3 mb-3">
+                    <div class="flex justify-between text-[11px] mb-1.5">
+                        <span class="text-slate-400">Indikator Kecepatan Relatif</span>
+                        <span id="speedStatusBadge" class="font-mono font-medium text-emerald-400">Kecepatan Maksimum (Perihelion)</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5">
+                        <div id="velocityProgressBar" class="h-full rounded-full bg-gradient-to-r from-rose-500 via-amber-400 to-emerald-400 transition-all duration-75" style="width: 100%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-mono text-slate-500 mt-1">
+                        <span>Aphelion (Lambat)</span>
+                        <span>Rata-rata (29.78 km/s)</span>
+                        <span>Perihelion (Cepat)</span>
+                    </div>
+                </div>
+
+                <!-- Geometry & Focus Table -->
+                <div class="bg-space-900/60 border border-slate-800/80 rounded-xl p-3 space-y-1.5 text-xs">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Pergeseran Fokus Matahari (c = a·e):</span>
+                        <span id="valFocalShift" class="font-mono text-amber-300 font-medium">2.50 juta km</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Sumbu Semi-Mayor (a) / Semi-Minor (b):</span>
+                        <span id="valAxesRatio" class="font-mono text-slate-200">149.60 / 149.58 jt km</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Anomali Sejati (Sudut θ):</span>
+                        <span id="valTrueAnomaly" class="font-mono text-sky-300">0.0°</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Kecepatan Sudut (dθ/dt):</span>
+                        <span id="valAngularSpeed" class="font-mono text-purple-300">1.019° / hari</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulation Controls Panel -->
+            <div class="glass-panel rounded-2xl p-4 border border-slate-800/90 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-bold text-white">Kontrol Simulasi & Skala</h2>
+                    <button id="btnPlayPause" class="px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-xs transition flex items-center gap-1.5 shadow-lg shadow-sky-500/20">
+                        <svg id="iconPause" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span id="playPauseText">Jeda</span>
+                    </button>
+                </div>
+
+                <!-- Control 1: Time Speed -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <label for="sliderSpeed" class="text-slate-300 font-medium">Kecepatan Waktu Simulasi</label>
+                        <span id="labelSpeed" class="font-mono text-sky-400">60 hari / detik</span>
+                    </div>
+                    <input id="sliderSpeed" type="range" min="5" max="365" step="5" value="60" class="w-full">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                        <span>Lambat (5 hr/dtk)</span>
+                        <span>1 Tahun / 6 dtk</span>
+                        <span>Cepat (1 thn/dtk)</span>
+                    </div>
+                </div>
+
+                <!-- Control 2: Eccentricity Scale / Exaggeration -->
+                <div class="pt-2 border-t border-slate-800/80">
+                    <div class="flex justify-between text-xs mb-1">
+                        <label for="sliderEcc" class="text-slate-300 font-medium">Faktor Perbesaran Kelonjongan (e)</label>
+                        <span id="labelEcc" class="font-mono text-amber-400 font-semibold">1x (Asli e = 0.0167)</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mb-2">
+                        Pada skala asli 1x, rasio <span class="font-mono text-slate-300">b/a = 99.986%</span> (nyaris bulat, tetapi Matahari tetap bergeser 2.5 juta km dari pusat). Geser untuk melihat efek ekstrem Hukum II Kepler!
+                    </p>
+                    <input id="sliderEcc" type="range" min="1" max="35" step="1" value="1" class="w-full">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                        <span class="text-sky-400 font-medium">1x (Bumi Asli: 0.0167)</span>
+                        <span>12x (Merkurius: 0.20)</span>
+                        <span>35x (Komet: 0.58)</span>
+                    </div>
+                </div>
+
+                <!-- Control 3: Visual Toggles -->
+                <div class="pt-2 border-t border-slate-800/80 space-y-2">
+                    <div class="text-xs font-medium text-slate-300 mb-1">Opsi Visualisasi Sains</div>
+
+                    <label class="flex items-center justify-between cursor-pointer group">
+                        <span class="text-xs text-slate-300 group-hover:text-white transition">Tampilkan Sapuan Luas Juring (Hukum II Kepler)</span>
+                        <input id="chkKeplerSweep" type="checkbox" checked class="w-4 h-4 accent-sky-500 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between cursor-pointer group">
+                        <span class="text-xs text-slate-300 group-hover:text-white transition">Tampilkan Lingkaran Referensi (Pembanding Elips)</span>
+                        <input id="chkRefCircle" type="checkbox" checked class="w-4 h-4 accent-sky-500 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between cursor-pointer group">
+                        <span class="text-xs text-slate-300 group-hover:text-white transition">Tampilkan Fokus Kosong (F₂) & Pusat Elips (O)</span>
+                        <input id="chkFociDetails" type="checkbox" checked class="w-4 h-4 accent-sky-500 rounded cursor-pointer">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Scientific Explanation Box -->
+            <div class="glass-panel rounded-2xl p-4 border border-slate-800/90 text-xs text-slate-300 space-y-2 leading-relaxed">
+                <h3 class="font-bold text-white flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Mengapa Orbit Bumi Tampak Seperti Lingkaran?
+                </h3>
+                <p class="text-slate-400">
+                    Buku teks sering menggambar orbit Bumi sangat lonjong. Faktanya, eksentrisitas Bumi hanya <strong class="text-slate-200">e = 0.0167</strong>:
+                </p>
+                <ul class="list-disc list-inside space-y-1 text-slate-400">
+                    <li>Sumbu semi-mayor (<strong class="text-slate-200">a</strong>) = <span class="font-mono">149.60 juta km</span></li>
+                    <li>Sumbu semi-minor (<strong class="text-slate-200">b</strong>) = <span class="font-mono">149.58 juta km</span> (selisih hanya 0.014%!)</li>
+                    <li>Namun, <strong class="text-amber-300">Matahari di titik fokus F₁</strong> bergeser sejauh <span class="font-mono text-slate-200">c = a × e = 2.50 juta km</span> dari pusat orbit <strong class="text-slate-200">O</strong> (sekitar 3.6 kali radius Matahari).</li>
+                    <li>Sesuai <strong class="text-emerald-300">Persamaan Vis-Viva</strong> <span class="font-mono">v² = GM(2/r - 1/a)</span>, kecepatan Bumi naik menjadi <span class="font-mono text-emerald-300">30.29 km/s</span> di Perihelion dan turun menjadi <span class="font-mono text-rose-300">29.29 km/s</span> di Aphelion.</li>
+                </ul>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ============================================================================ -->
+    <!-- VIEW 2: LABORATORIUM MENGHITUNG JARAK BUMI - MATAHARI SECARA LENGKAP         -->
+    <!-- ============================================================================ -->
+    <section id="viewMeasureAUSection" class="hidden flex-1 max-w-7xl w-full mx-auto p-3 md:p-5 flex-col gap-5">
+        <!-- Sub-Header / Method Selector -->
+        <div class="glass-panel rounded-2xl p-4 border border-slate-800/90 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 text-[11px] font-mono uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded-full">Astrometri & Trigonometri</span>
+                    <h2 class="text-base md:text-lg font-bold text-white">Bagaimana Manusia Menghitung Jarak Bumi ke Matahari (1 AU)?</h2>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">
+                    Pilih metode eksperimen di samping untuk melakukan simulasi pengukuran geometris, rumus trigonometri paralaks, hingga telemetri radar modern.
+                </p>
+            </div>
+
+            <!-- 3 Method Stepper Buttons -->
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+                <button data-method="parallax" class="au-method-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 transition flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-slate-950/20 flex items-center justify-center font-mono text-[11px]">1</span>
+                    <span>Triangulasi Paralaks & Transit Venus</span>
+                </button>
+                <button data-method="radar" class="au-method-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-space-800 hover:bg-space-700 text-slate-300 border border-slate-700 transition flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-slate-950/40 flex items-center justify-center font-mono text-[11px]">2</span>
+                    <span>Gema Radar Kecepatan Cahaya (Modern)</span>
+                </button>
+                <button data-method="angular" class="au-method-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-space-800 hover:bg-space-700 text-slate-300 border border-slate-700 transition flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-slate-950/40 flex items-center justify-center font-mono text-[11px]">3</span>
+                    <span>Variasi Diameter Sudut (Perihelion–Aphelion)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Grid for Lab -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+
+            <!-- Left Column (8 cols): Interactive Geometry & Split-View Simulator -->
+            <div class="lg:col-span-7 flex flex-col gap-4">
+                <div class="relative rounded-2xl overflow-hidden border border-slate-800 bg-space-950 shadow-2xl aspect-[16/11] w-full">
+                    <canvas id="auLabCanvas" class="w-full h-full block"></canvas>
+
+                    <!-- Top Left Mode Indicator -->
+                    <div class="absolute top-3 left-3 flex flex-wrap gap-2 pointer-events-none">
+                        <div class="glass-panel px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-300 border border-amber-500/30 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                            <span id="labCanvasTitle">Simulasi Geometri Paralaks Transit Venus</span>
+                        </div>
+                    </div>
+
+                    <!-- Top Right Action Button (For Radar Pulse) -->
+                    <div id="radarActionOverlay" class="hidden absolute top-3 right-3">
+                        <button id="btnFireRadar" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/30 transition flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            <span>Tembakkan Sinyal Radar ke Venus</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step-by-Step Mathematical Proof & Live Formula Breakdown -->
+                <div class="glass-panel rounded-2xl p-4 border border-slate-800/90 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            <span>Penurunan Rumus & Perhitungan Lengkap Secara Real-Time</span>
+                        </h3>
+                        <span class="text-[11px] font-mono text-sky-400">Live Math Engine</span>
+                    </div>
+
+                    <!-- Dynamic Math Steps Container -->
+                    <div id="mathStepsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                        <!-- Step 1 -->
+                        <div class="bg-space-900/90 border border-slate-800/90 rounded-xl p-3 flex flex-col justify-between">
+                            <div>
+                                <div class="text-[11px] font-mono uppercase text-sky-400 font-semibold mb-1">Tahap 1: Hukum III Kepler</div>
+                                <p class="text-[11px] text-slate-400 leading-relaxed mb-2">
+                                    Periode orbit Venus <span class="font-mono text-slate-200">Tᵥ = 0.6152 thn</span> dan Bumi <span class="font-mono text-slate-200">T_b = 1 thn</span> memberikan jarak relatif Venus terhadap Matahari:
+                                </p>
+                            </div>
+                            <div class="bg-space-950 p-2 rounded-lg border border-slate-800/80 font-mono text-[11px] space-y-1">
+                                <div class="text-slate-300">aᵥ = (0.6152)²ᐟ³ = <span class="text-sky-300 font-bold">0.7233 AU</span></div>
+                                <div class="text-slate-400">Saat Transit (Segaris):</div>
+                                <div class="text-emerald-300 font-semibold">d_bv = 1 - 0.7233 = 0.2767 AU</div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div class="bg-space-900/90 border border-slate-800/90 rounded-xl p-3 flex flex-col justify-between">
+                            <div>
+                                <div class="text-[11px] font-mono uppercase text-amber-400 font-semibold mb-1" id="step2Title">Tahap 2: Triangulasi Paralaks</div>
+                                <p class="text-[11px] text-slate-400 leading-relaxed mb-2" id="step2Desc">
+                                    Dua pengamat terpisah sejauh <span class="font-mono text-slate-200" id="mathBaselineText">B = 9,500 km</span> mengukur pergeseran sudut Venus <span class="font-mono text-amber-300" id="mathAngleText">Δθv</span>:
+                                </p>
+                            </div>
+                            <div class="bg-space-950 p-2 rounded-lg border border-slate-800/80 font-mono text-[11px] space-y-1" id="step2FormulaBox">
+                                <div class="text-slate-300">d_bv = B / tan(Δθ_net)</div>
+                                <div class="text-amber-300 font-bold" id="mathVenusDistResult">d_bv = 41,393,730 km</div>
+                                <div class="text-slate-500 text-[10px]">Jarak nyata Bumi ke Venus</div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div class="bg-space-900/90 border border-emerald-500/30 rounded-xl p-3 flex flex-col justify-between">
+                            <div>
+                                <div class="text-[11px] font-mono uppercase text-emerald-400 font-semibold mb-1">Tahap 3: Konversi ke 1 AU</div>
+                                <p class="text-[11px] text-slate-400 leading-relaxed mb-2">
+                                    Karena <span class="font-mono text-slate-200">d_bv = 0.2767 AU</span> telah diketahui dalam kilometer, maka jarak Bumi–Matahari (<span class="font-mono text-slate-200">1 AU</span>) adalah:
+                                </p>
+                            </div>
+                            <div class="bg-space-950 p-2 rounded-lg border border-emerald-500/30 font-mono text-[11px] space-y-1">
+                                <div class="text-slate-300">1 AU = d_bv / 0.2767</div>
+                                <div class="text-emerald-400 font-bold text-xs" id="mathFinalAUResult">149,597,871 km</div>
+                                <div class="text-slate-400 text-[10px]" id="mathErrorRate">Akurasi: 99.99% (Galat 0.00%)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column (5 cols): Interactive Controls & Scientific Measurement Readouts -->
+            <div class="lg:col-span-5 flex flex-col gap-4">
+
+                <!-- Primary Result Card -->
+                <div class="glass-panel rounded-2xl p-4 border border-amber-500/30 bg-gradient-to-br from-slate-900/90 to-space-950">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-amber-300">Hasil Perhitungan Jarak Bumi–Matahari</span>
+                        <span class="px-2 py-0.5 text-[10px] font-mono bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 rounded-md" id="auMethodTag">Metode Paralaks</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 my-2">
+                        <div class="bg-space-950/90 border border-slate-800 rounded-xl p-3">
+                            <div class="text-[11px] text-slate-400">Jarak Rata-Rata (1 AU Terukur)</div>
+                            <div class="text-lg font-mono font-bold text-white mt-0.5" id="resMeasuredAU">149.60 <span class="text-xs font-normal text-sky-400">Juta km</span></div>
+                            <div class="text-[11px] font-mono text-slate-400 mt-0.5" id="resExactKm">149,597,871 km</div>
+                        </div>
+                        <div class="bg-space-950/90 border border-slate-800 rounded-xl p-3">
+                            <div class="text-[11px] text-slate-400">Paralaks Matahari (<span class="font-mono">π_⊙</span>)</div>
+                            <div class="text-lg font-mono font-bold text-amber-400 mt-0.5" id="resSolarParallax">8.794" <span class="text-xs font-normal text-slate-400">detik busur</span></div>
+                            <div class="text-[11px] font-mono text-slate-400 mt-0.5" id="resLightTime">Waktu Cahaya: 8m 19.0d</div>
+                        </div>
+                    </div>
+
+                    <div class="text-[11px] text-slate-400 flex items-center justify-between pt-2 border-t border-slate-800/80 font-mono">
+                        <span>Standar IAU 2012: <strong class="text-slate-200">149,597,870.7 km</strong></span>
+                        <span id="resAccuracyBadge" class="text-emerald-400 font-semibold">Galat: 0.00%</span>
+                    </div>
+                </div>
+
+                <!-- Control Group A: Parallax & Venus Transit Controls -->
+                <div id="controlsParallax" class="glass-panel rounded-2xl p-4 border border-slate-800/90 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-white">Parameter Observatorium Paralaks</h3>
+                        <button id="btnResetParallaxIdeal" class="px-2.5 py-1 text-[11px] font-mono bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 rounded-lg transition">
+                            Reset Kalibrasi Presisi
+                        </button>
+                    </div>
+
+                    <!-- Slider 1: Baseline Distance B between 2 Observatories on Earth -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <label for="sliderBaseline" class="text-slate-300 font-medium">Jarak Antar Pengamat di Bumi (Baseline <span class="font-mono text-sky-300">B</span>)</label>
+                            <span id="labelBaseline" class="font-mono text-sky-400 font-semibold">9,500 km</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mb-2">
+                            Jarak lurus chord antara Observatorium Utara (mis. Tromsø) dan Observatorium Selatan (mis. Tanjung Harapan). Maksimum = Diameter Bumi (<span class="font-mono">12,742 km</span>).
+                        </p>
+                        <input id="sliderBaseline" type="range" min="2000" max="12500" step="100" value="9500" class="w-full">
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                            <span>Dekat (2,000 km)</span>
+                            <span>Antar-Benua (9,500 km)</span>
+                            <span>Diameter Bumi (12,500 km)</span>
+                        </div>
+                    </div>
+
+                    <!-- Slider 2: Measurement Error / Telescope Angular Resolution -->
+                    <div class="pt-3 border-t border-slate-800/80">
+                        <div class="flex justify-between text-xs mb-1">
+                            <label for="sliderAngleError" class="text-slate-300 font-medium">Simulasi Galat Sudut Pengamatan (<span class="font-mono text-amber-300">δθ</span>)</label>
+                            <span id="labelAngleError" class="font-mono text-emerald-400 font-semibold">0.00" (Teleskop Modern)</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mb-2">
+                            Karena sudut paralaks sangat kecil (hanya puluhan detik busur / <span class="font-mono">1° = 3600"</span>), geser untuk melihat betapa sensitifnya perhitungan jarak terhadap efek atmosfer (*Black Drop Effect*).
+                        </p>
+                        <input id="sliderAngleError" type="range" min="-1.5" max="1.5" step="0.05" value="0" class="w-full">
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                            <span>-1.5" (Abad ke-18)</span>
+                            <span class="text-emerald-400">0.00" (Tepat)</span>
+                            <span>+1.5" (Abad ke-18)</span>
+                        </div>
+                    </div>
+
+                    <!-- Historical Presets -->
+                    <div class="pt-3 border-t border-slate-800/80">
+                        <div class="text-xs font-medium text-slate-300 mb-2">Preset Eksperimen Sejarah Astronomi:</div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button data-hist="cassini" class="hist-preset-btn p-2 rounded-xl bg-space-900 hover:bg-space-800 border border-slate-800 text-left transition">
+                                <div class="text-[11px] font-bold text-amber-300">Cassini (1672)</div>
+                                <div class="text-[10px] text-slate-400">Paris–Cayenne (Mars)</div>
+                                <div class="text-[10px] font-mono text-slate-300 mt-1">~140 Juta km</div>
+                            </button>
+                            <button data-hist="cook" class="hist-preset-btn p-2 rounded-xl bg-space-900 hover:bg-space-800 border border-slate-800 text-left transition">
+                                <div class="text-[11px] font-bold text-sky-300">Ekspedisi 1769</div>
+                                <div class="text-[10px] text-slate-400">Tahiti–Norwegia</div>
+                                <div class="text-[10px] font-mono text-slate-300 mt-1">~153 Juta km</div>
+                            </button>
+                            <button data-hist="modern" class="hist-preset-btn p-2 rounded-xl bg-space-900 hover:bg-space-800 border border-emerald-500/40 text-left transition">
+                                <div class="text-[11px] font-bold text-emerald-300">Kalibrasi IAU</div>
+                                <div class="text-[10px] text-slate-400">Bebas Galat Optik</div>
+                                <div class="text-[10px] font-mono text-slate-300 mt-1">149.60 Juta km</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control Group B: Radar Echo Controls (Hidden by default) -->
+                <div id="controlsRadar" class="hidden glass-panel rounded-2xl p-4 border border-slate-800/90 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-white">Telemetri Radar Gelombang Radio (Goldstone / Arecibo)</h3>
+                        <span class="px-2 py-0.5 text-[10px] font-mono bg-emerald-500/20 text-emerald-300 rounded">c = 299,792.458 km/s</span>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Kita tidak bisa memantulkan radar langsung ke Matahari karena korona menyerap sinyal radio. Sebaliknya, kita menembakkan pulsa radar ke <strong class="text-amber-300">permukaan padat Venus</strong> saat konjungsi inferior (<span class="font-mono">0.2767 AU</span>) dan mencatat waktu tempuh pulang-pergi (<strong class="text-emerald-300">Δt</strong>).
+                    </p>
+
+                    <div class="bg-space-900/90 border border-slate-800 rounded-xl p-3 space-y-2 font-mono text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Status Transmisi Pulsa:</span>
+                            <span id="radarStatusText" class="text-emerald-400 font-bold">Siap Ditembakkan</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Stopwatch Pulang-Pergi (Δt):</span>
+                            <span id="radarTimerText" class="text-sky-300 font-bold">276.1502 detik (4m 36.15d)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Rumus Jarak Satu Arah:</span>
+                            <span class="text-slate-200">d_bv = (c × Δt) / 2</span>
+                        </div>
+                    </div>
+
+                    <button id="btnTriggerRadarPanel" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition">
+                        Luncurkan Eksperimen Pulsa Radar Sekarang
+                    </button>
+                </div>
+
+                <!-- Control Group C: Solar Angular Diameter (Perihelion vs Aphelion) -->
+                <div id="controlsAngular" class="hidden glass-panel rounded-2xl p-4 border border-slate-800/90 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-white">Pengukuran Diameter Sudut Piringan Matahari (<span class="font-mono">α</span>)</h3>
+                        <span class="px-2 py-0.5 text-[10px] font-mono bg-sky-500/20 text-sky-300 rounded">D_⊙ = 1,392,700 km</span>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Dengan mengukur ukuran tampak (diameter sudut <span class="font-mono text-amber-300">α</span>) Matahari di langit sepanjang tahun menggunakan *Heliometer*, kita dapat menghitung jarak Bumi–Matahari pada hari apa pun dengan rumus: <span class="font-mono text-slate-200">r = D_⊙ / (2 · tan(α/2))</span>.
+                    </p>
+
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <label for="sliderDayAngular" class="text-slate-300 font-medium">Pilih Waktu Pengamatan Sepanjang Tahun</label>
+                            <span id="labelDayAngular" class="font-mono text-amber-400 font-semibold">Hari ke-0 (Perihelion - 3 Jan)</span>
+                        </div>
+                        <input id="sliderDayAngular" type="range" min="0" max="365" step="1" value="0" class="w-full">
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                            <span class="text-emerald-400">Perihelion (32' 32")</span>
+                            <span>Rata-rata (31' 59")</span>
+                            <span class="text-rose-400">Aphelion (31' 27")</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5 text-xs font-mono">
+                        <div class="bg-space-900 p-2.5 rounded-xl border border-slate-800">
+                            <div class="text-[10px] text-slate-400">Diameter Sudut Terukur (α)</div>
+                            <div id="valSolarAngularDiam" class="text-sm font-bold text-amber-300 mt-0.5">0.5421° (32' 31.6")</div>
+                        </div>
+                        <div class="bg-space-900 p-2.5 rounded-xl border border-slate-800">
+                            <div class="text-[10px] text-slate-400">Jarak Sesaat r = D_⊙ / α</div>
+                            <div id="valSolarInstantDist" class="text-sm font-bold text-sky-300 mt-0.5">147.10 Juta km</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Educational Summary Card -->
+                <div class="glass-panel rounded-2xl p-4 border border-slate-800/90 text-xs text-slate-300 space-y-2 leading-relaxed">
+                    <h4 class="font-bold text-white flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-sky-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                        Mengapa Kita Mengukur Venus Terlebih Dahulu?
+                    </h4>
+                    <p class="text-slate-400">
+                        Mengukur paralaks Matahari secara langsung sangat sulit karena cahaya Matahari menyilaukan bintang latar belakang dan tepiannya bergolak. <strong class="text-slate-200">Edmond Halley (1716)</strong> menyadari bahwa saat <strong class="text-amber-300">Transit Venus</strong>, Venus tampak sebagai titik hitam tegas di depan piringan Matahari dan jaraknya hampir 4× lebih dekat ke Bumi (<span class="font-mono">0.28 AU</span>), sehingga sudut paralaksnya jauh lebih besar dan mudah diukur!
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <script>
+        (function() {
+            // ============================================================================
+            // 1. ASTROPHYSICAL CONSTANTS (TRUE SCALE DATA)
+            // ============================================================================
+            const REAL_ECCENTRICITY = 0.0167086;       // Eksentrisitas asli Bumi
+            const SEMI_MAJOR_AXIS_KM = 149.5978707;    // Juta km (1 AU standar IAU)
+            const SIDEREAL_YEAR_DAYS = 365.256363;     // Hari dalam 1 periode orbit
+            const MEAN_VELOCITY_KMS = 29.7847;         // Kecepatan rata-rata orbit Bumi (km/s)
+            const EARTH_RADIUS_KM = 6371.0;            // Radius rata-rata Bumi (km)
+            const VENUS_SEMI_MAJOR_AU = 0.723332;      // Jarak orbit Venus (AU)
+            const SPEED_OF_LIGHT_KMS = 299792.458;     // Kecepatan cahaya vakum (km/s)
+            const SUN_DIAMETER_KM = 1392700;           // Diameter fisik Matahari (km)
+
+            // Nama bulan untuk konversi hari (Hari ke-0 = Perihelion ~ 3 Januari)
+            const MONTH_NAMES = [
+                "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+            ];
+            const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+            // ============================================================================
+            // 2. SIMULATION STATE
+            // ============================================================================
+            const state = {
+                isRunning: true,
+                daysElapsed: 0,                  // 0 = Perihelion (3 Januari)
+                simSpeedDaysPerSec: 60,          // Kecepatan waktu simulasi
+                eccentricityMultiplier: 1,       // 1x = skala asli (e = 0.0167)
+                zoomFocusMode: false,            // Mode zoom khusus ke pusat & titik fokus
+                showKeplerSweep: true,           // Tampilkan juring Hukum II Kepler
+                showRefCircle: true,             // Tampilkan lingkaran referensi sempurna
+                showFociDetails: true,           // Tampilkan titik O dan F2
+
+                // Real-time calculated physics state
+                currentEcc: REAL_ECCENTRICITY,
+                meanAnomaly: 0,                  // M (rad)
+                eccentricAnomaly: 0,             // E (rad)
+                trueAnomaly: 0,                  // theta (rad)
+                radiusMillionKm: 147.10,         // r (juta km)
+                velocityKms: 30.29,              // v (km/s)
+                vMaxKms: 30.29,
+                vMinKms: 29.29,
+
+                // Starfield background cache
+                stars: []
+            };
+
+            // ============================================================================
+            // 3. DOM ELEMENTS
+            // ============================================================================
+            const orbitCanvas = document.getElementById('orbitCanvas');
+            const ctx = orbitCanvas.getContext('2d');
+            const graphCanvas = document.getElementById('graphCanvas');
+            const gctx = graphCanvas.getContext('2d');
+
+            const simDateDisplay = document.getElementById('simDateDisplay');
+            const scaleModeBadge = document.getElementById('scaleModeBadge');
+            const statusDot = document.getElementById('statusDot');
+            const zoomStatusText = document.getElementById('zoomStatusText');
+
+            const valDistance = document.getElementById('valDistance');
+            const valDistanceAU = document.getElementById('valDistanceAU');
+            const valVelocity = document.getElementById('valVelocity');
+            const valVelocityKmh = document.getElementById('valVelocityKmh');
+            const velocityProgressBar = document.getElementById('velocityProgressBar');
+            const speedStatusBadge = document.getElementById('speedStatusBadge');
+
+            const valFocalShift = document.getElementById('valFocalShift');
+            const valAxesRatio = document.getElementById('valAxesRatio');
+            const valTrueAnomaly = document.getElementById('valTrueAnomaly');
+            const valAngularSpeed = document.getElementById('valAngularSpeed');
+            const vMaxLabel = document.getElementById('vMaxLabel');
+            const vMinLabel = document.getElementById('vMinLabel');
+
+            const btnPlayPause = document.getElementById('btnPlayPause');
+            const playPauseText = document.getElementById('playPauseText');
+            const btnJumpPerihelion = document.getElementById('btnJumpPerihelion');
+            const btnJumpAphelion = document.getElementById('btnJumpAphelion');
+            const btnResetReal = document.getElementById('btnResetReal');
+            const btnZoomFocus = document.getElementById('btnZoomFocus');
+
+            const sliderSpeed = document.getElementById('sliderSpeed');
+            const labelSpeed = document.getElementById('labelSpeed');
+            const sliderEcc = document.getElementById('sliderEcc');
+            const labelEcc = document.getElementById('labelEcc');
+
+            const chkKeplerSweep = document.getElementById('chkKeplerSweep');
+            const chkRefCircle = document.getElementById('chkRefCircle');
+            const chkFociDetails = document.getElementById('chkFociDetails');
+
+            // ============================================================================
+            // 4. KEPLER EQUATION SOLVER & ORBITAL MECHANICS
+            // ============================================================================
+
+            /**
+             * Menyelesaikan Persamaan Kepler: M = E - e * sin(E)
+             * Menggunakan metode iterasi Newton-Raphson dengan akurasi tinggi (1e-9)
+             */
+            function solveKeplerEquation(M, e) {
+                let E = M;
+                for (let i = 0; i < 12; i++) {
+                    const f = E - e * Math.sin(E) - M;
+                    const fPrime = 1 - e * Math.cos(E);
+                    const delta = f / fPrime;
+                    E -= delta;
+                    if (Math.abs(delta) < 1e-9) break;
+                }
+                return E;
+            }
+
+            /**
+             * Menghitung posisi polar (r, theta) dan kecepatan Vis-Viva untuk Mean Anomaly M tertentu
+             */
+            function computeOrbitalStateAtMeanAnomaly(M, e) {
+                const E = solveKeplerEquation(M, e);
+
+                // Menghindari ketidakstabilan atan2 dengan rumus sin(theta/2) dan cos(theta/2)
+                const sinHalfE = Math.sin(E / 2);
+                const cosHalfE = Math.cos(E / 2);
+                const sqrtPlus = Math.sqrt(1 + e);
+                const sqrtMinus = Math.sqrt(1 - e);
+
+                let theta = 2 * Math.atan2(sqrtPlus * sinHalfE, sqrtMinus * cosHalfE);
+                if (theta < 0) theta += 2 * Math.PI;
+
+                // Jarak heliosentris r = a * (1 - e * cos(E))
+                const rRatio = 1 - e * Math.cos(E); // r / a
+                const rMillionKm = SEMI_MAJOR_AXIS_KM * rRatio;
+
+                // Kecepatan orbit berdasarkan Persamaan Vis-Viva:
+                // v = v_circular * sqrt(2 / (r/a) - 1)
+                const vKms = MEAN_VELOCITY_KMS * Math.sqrt((2 / rRatio) - 1);
+
+                return { E, theta, rRatio, rMillionKm, vKms };
+            }
+
+            /**
+             * Memperbarui seluruh parameter fisika berdasarkan hari simulasi saat ini
+             */
+            function updateOrbitalPhysics() {
+                const e = Math.min(0.65, REAL_ECCENTRICITY * state.eccentricityMultiplier);
+                state.currentEcc = e;
+
+                // Mean Anomaly M berjalan konstan terhadap waktu
+                const cycleFraction = (state.daysElapsed % SIDEREAL_YEAR_DAYS) / SIDEREAL_YEAR_DAYS;
+                const M = cycleFraction * 2 * Math.PI;
+
+                const current = computeOrbitalStateAtMeanAnomaly(M, e);
+                state.meanAnomaly = M;
+                state.eccentricAnomaly = current.E;
+                state.trueAnomaly = current.theta;
+                state.radiusMillionKm = current.rMillionKm;
+                state.velocityKms = current.vKms;
+
+                // Hitung kecepatan maksimum (Perihelion: r/a = 1 - e) dan minimum (Aphelion: r/a = 1 + e)
+                state.vMaxKms = MEAN_VELOCITY_KMS * Math.sqrt((2 / (1 - e)) - 1);
+                state.vMinKms = MEAN_VELOCITY_KMS * Math.sqrt((2 / (1 + e)) - 1);
+            }
+
+            /**
+             * Konversi hari setelah Perihelion (3 Januari) ke tanggal kalender
+             */
+            function formatCalendarDate(daysSincePerihelion) {
+                // Perihelion berada sekitar 3 Januari (hari ke-2 dalam tahun kalender, indeks 0-based)
+                let dayOfYear = Math.floor((daysSincePerihelion + 2) % 365);
+                if (dayOfYear < 0) dayOfYear += 365;
+
+                let monthIndex = 0;
+                while (dayOfYear >= DAYS_IN_MONTH[monthIndex] && monthIndex < 11) {
+                    dayOfYear -= DAYS_IN_MONTH[monthIndex];
+                    monthIndex++;
+                }
+                const dayOfMonth = dayOfYear + 1;
+                return `${dayOfMonth} ${MONTH_NAMES[monthIndex]}`;
+            }
+
+            // ============================================================================
+            // 5. CANVAS INITIALIZATION & RESPONSIVE RESIZING
+            // ============================================================================
+            function generateStars(count) {
+                state.stars = [];
+                for (let i = 0; i < count; i++) {
+                    state.stars.push({
+                        x: Math.random(),
+                        y: Math.random(),
+                        size: Math.random() * 1.6 + 0.4,
+                        alpha: Math.random() * 0.65 + 0.15
+                    });
+                }
+            }
+
+            function resizeCanvases() {
+                const dpr = window.devicePixelRatio || 1;
+
+                // Main Orbit Canvas
+                const rect = orbitCanvas.parentElement.getBoundingClientRect();
+                orbitCanvas.width = rect.width * dpr;
+                orbitCanvas.height = rect.height * dpr;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+                // Graph Canvas
+                const gRect = graphCanvas.parentElement.getBoundingClientRect();
+                graphCanvas.width = gRect.width * dpr;
+                graphCanvas.height = gRect.height * dpr;
+                gctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+
+            // ============================================================================
+            // 6. MAIN ORBIT CANVAS RENDERER
+            // ============================================================================
+            function drawOrbitScene() {
+                const width = orbitCanvas.width / (window.devicePixelRatio || 1);
+                const height = orbitCanvas.height / (window.devicePixelRatio || 1);
+
+                ctx.clearRect(0, 0, width, height);
+
+                // 1. Draw subtle starfield background
+                for (const star of state.stars) {
+                    ctx.fillStyle = `rgba(226, 232, 240, ${star.alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(star.x * width, star.y * height, star.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                const centerX = width / 2;
+                const centerY = height / 2;
+
+                // 2. Determine Geometric Scale (Semi-major axis 'a' in pixels)
+                const e = state.currentEcc;
+                const baseRadiusPx = Math.min(width, height) * 0.36;
+                // Jika mode Inspeksi Fokus aktif, perbesar 8x di sekitar pusat elips
+                const zoomFactor = state.zoomFocusMode ? 7.5 : 1.0;
+                const aPx = baseRadiusPx * zoomFactor;
+                const bPx = aPx * Math.sqrt(1 - e * e);
+                const cPx = aPx * e; // Jarak pusat elips (O) ke titik fokus (F1 & F2)
+
+                // Koordinat layar:
+                // Pusat Elips O = (centerX, centerY)
+                // Fokus F1 (Matahari) berada di sebelah kanan pusat (+cPx) sehingga Perihelion di kanan (+aPx)
+                const sunX = centerX + cPx;
+                const sunY = centerY;
+                const emptyFocusX = centerX - cPx;
+                const emptyFocusY = centerY;
+
+                // 3. Draw Background Polar Grid around Center O
+                ctx.save();
+                ctx.strokeStyle = 'rgba(148, 163, 184, 0.07)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                ctx.lineTo(width, centerY);
+                ctx.moveTo(centerX, 0);
+                ctx.lineTo(centerX, height);
+                ctx.stroke();
+                ctx.restore();
+
+                // 4. Draw Reference Perfect Circle (Centered at O with radius = aPx)
+                if (state.showRefCircle && !state.zoomFocusMode) {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
+                    ctx.lineWidth = 1.2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, aPx, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // 5. Draw Kepler's 2nd Law Equal-Area Sectors (Perihelion vs Aphelion + Live Sweep)
+                if (state.showKeplerSweep && !state.zoomFocusMode) {
+                    const sweepDays = 24; // Juring selama 24 hari yang sama
+                    const sweepMeanAnomalySpan = (sweepDays / SIDEREAL_YEAR_DAYS) * 2 * Math.PI;
+
+                    // Helper untuk menggambar juring dari M_start ke M_end berpusat di Matahari (F1)
+                    const drawKeplerSector = (MStart, MEnd, fillStyle, strokeStyle, labelText) => {
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.moveTo(sunX, sunY);
+                        const steps = 28;
+                        for (let i = 0; i <= steps; i++) {
+                            const m = MStart + (MEnd - MStart) * (i / steps);
+                            const E_step = solveKeplerEquation(m, e);
+                            // Koordinat elips terhadap pusat O: x = a*cos(E), y = -b*sin(E) (berlawanan jarum jam)
+                            const px = centerX + aPx * Math.cos(E_step);
+                            const py = centerY - bPx * Math.sin(E_step);
+                            ctx.lineTo(px, py);
+                        }
+                        ctx.closePath();
+                        ctx.fillStyle = fillStyle;
+                        ctx.fill();
+                        ctx.strokeStyle = strokeStyle;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+
+                        if (labelText) {
+                            const mMid = (MStart + MEnd) / 2;
+                            const EMid = solveKeplerEquation(mMid, e);
+                            const lx = sunX + (centerX + aPx * Math.cos(EMid) - sunX) * 0.58;
+                            const ly = sunY + (centerY - bPx * Math.sin(EMid) - sunY) * 0.58;
+                            ctx.fillStyle = 'rgba(226, 232, 240, 0.85)';
+                            ctx.font = '500 10px "JetBrains Mono", monospace';
+                            ctx.textAlign = 'center';
+                            ctx.fillText(labelText, lx, ly);
+                        }
+                        ctx.restore();
+                    };
+
+                    // Juring Pembanding 1: Di sekitar Perihelion (lebar dan pendek)
+                    drawKeplerSector(
+                        -sweepMeanAnomalySpan / 2,
+                        sweepMeanAnomalySpan / 2,
+                        'rgba(16, 185, 129, 0.13)',
+                        'rgba(16, 185, 129, 0.35)',
+                        'Δt = 24 hr (Luas A₁)'
+                    );
+
+                    // Juring Pembanding 2: Di sekitar Aphelion (sempit dan panjang, Luas A₂ = A₁)
+                    drawKeplerSector(
+                        Math.PI - sweepMeanAnomalySpan / 2,
+                        Math.PI + sweepMeanAnomalySpan / 2,
+                        'rgba(244, 63, 94, 0.13)',
+                        'rgba(244, 63, 94, 0.35)',
+                        'Δt = 24 hr (Luas A₂ = A₁)'
+                    );
+
+                    // Juring Aktif Mengikuti Bumi (24 hari terakhir)
+                    drawKeplerSector(
+                        state.meanAnomaly - sweepMeanAnomalySpan,
+                        state.meanAnomaly,
+                        'rgba(56, 189, 248, 0.22)',
+                        'rgba(56, 189, 248, 0.55)',
+                        null
+                    );
+                }
+
+                // 6. Draw True Elliptical Orbit Path
+                ctx.save();
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 2;
+                ctx.shadowColor = 'rgba(56, 189, 248, 0.35)';
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.ellipse(centerX, centerY, aPx, bPx, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+
+                // 7. Draw Perihelion & Aphelion Markers (when not zoomed strictly into center)
+                if (!state.zoomFocusMode) {
+                    const periX = centerX + aPx;
+                    const periY = centerY;
+                    const apheX = centerX - aPx;
+                    const apheY = centerY;
+
+                    // Perihelion Point
+                    ctx.fillStyle = '#34d399';
+                    ctx.beginPath();
+                    ctx.arc(periX, periY, 4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.font = '600 11px Inter, sans-serif';
+                    ctx.fillStyle = '#6ee7b7';
+                    ctx.textAlign = 'right';
+                    ctx.fillText('PERIHELION', periX - 10, periY - 12);
+                    ctx.font = '400 10px "JetBrains Mono", monospace';
+                    ctx.fillStyle = '#94a3b8';
+                    const rPeri = (SEMI_MAJOR_AXIS_KM * (1 - e)).toFixed(1);
+                    ctx.fillText(`${rPeri} jt km`, periX - 10, periY + 18);
+
+                    // Aphelion Point
+                    ctx.fillStyle = '#fb7185';
+                    ctx.beginPath();
+                    ctx.arc(apheX, apheY, 4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.font = '600 11px Inter, sans-serif';
+                    ctx.fillStyle = '#fda4af';
+                    ctx.textAlign = 'left';
+                    ctx.fillText('APHELION', apheX + 10, apheY - 12);
+                    ctx.font = '400 10px "JetBrains Mono", monospace';
+                    ctx.fillStyle = '#94a3b8';
+                    const rAphe = (SEMI_MAJOR_AXIS_KM * (1 + e)).toFixed(1);
+                    ctx.fillText(`${rAphe} jt km`, apheX + 10, apheY + 18);
+                }
+
+                // 8. Draw Center of Ellipse (O) and Empty Focus (F2)
+                if (state.showFociDetails) {
+                    // Garis dimensi pergeseran fokus antara O dan F1
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(251, 191, 36, 0.5)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY + 26);
+                    ctx.lineTo(sunX, centerY + 26);
+                    ctx.stroke();
+
+                    // Label jarak c = a*e jika cukup lebar atau dalam mode zoom
+                    if (cPx > 14 || state.zoomFocusMode) {
+                        ctx.fillStyle = '#fcd34d';
+                        ctx.font = '500 10px "JetBrains Mono", monospace';
+                        ctx.textAlign = 'center';
+                        const cKm = (SEMI_MAJOR_AXIS_KM * e).toFixed(2);
+                        ctx.fillText(`c = ${cKm} jt km`, (centerX + sunX) / 2, centerY + 40);
+                    }
+                    ctx.restore();
+
+                    // Titik Pusat Elips O
+                    ctx.save();
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(centerX - 7, centerY);
+                    ctx.lineTo(centerX + 7, centerY);
+                    ctx.moveTo(centerX, centerY - 7);
+                    ctx.lineTo(centerX, centerY + 7);
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#cbd5e1';
+                    ctx.font = '500 10px "JetBrains Mono", monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Pusat O', centerX, centerY - 12);
+                    ctx.restore();
+
+                    // Titik Fokus Kosong F2
+                    ctx.save();
+                    ctx.fillStyle = '#c084fc';
+                    ctx.beginPath();
+                    ctx.arc(emptyFocusX, emptyFocusY, 3.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.font = '500 10px "JetBrains Mono", monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('F₂', emptyFocusX, emptyFocusY + 18);
+                    ctx.restore();
+                }
+
+                // 9. Calculate Earth Position on Canvas
+                // Menggunakan Eccentric Anomaly E: x = centerX + a*cos(E), y = centerY - b*sin(E)
+                const earthX = centerX + aPx * Math.cos(state.eccentricAnomaly);
+                const earthY = centerY - bPx * Math.sin(state.eccentricAnomaly);
+
+                // 10. Draw Radius Vector Line from Sun (F1) to Earth
+                ctx.save();
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
+                ctx.lineWidth = 1.4;
+                ctx.setLineDash([3, 3]);
+                ctx.beginPath();
+                ctx.moveTo(sunX, sunY);
+                ctx.lineTo(earthX, earthY);
+                ctx.stroke();
+                ctx.restore();
+
+                // 11. Draw Sun at Focus F1
+                ctx.save();
+                const sunGlow = ctx.createRadialGradient(sunX, sunY, 2, sunX, sunY, 26);
+                sunGlow.addColorStop(0, 'rgba(253, 224, 71, 1)');
+                sunGlow.addColorStop(0.35, 'rgba(249, 115, 22, 0.85)');
+                sunGlow.addColorStop(1, 'rgba(249, 115, 22, 0)');
+                ctx.fillStyle = sunGlow;
+                ctx.beginPath();
+                ctx.arc(sunX, sunY, 26, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#fef08a';
+                ctx.beginPath();
+                ctx.arc(sunX, sunY, 7, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#fde047';
+                ctx.font = '600 10px "JetBrains Mono", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('Matahari (F₁)', sunX, sunY - 16);
+                ctx.restore();
+
+                // 12. Draw Earth & Instantaneous Velocity Vector (Tangent to Ellipse)
+                if (!state.zoomFocusMode) {
+                    // Vektor singgung elips pada sudut E: dx/dE = -a*sin(E), dy/dE = -b*cos(E)
+                    const tx = -aPx * Math.sin(state.eccentricAnomaly);
+                    const ty = -bPx * Math.cos(state.eccentricAnomaly);
+                    const tLen = Math.hypot(tx, ty) || 1;
+                    const ux = tx / tLen;
+                    const uy = ty / tLen;
+
+                    // Panjang panah proporsional terhadap rasio kecepatan saat ini
+                    const vNorm = (state.velocityKms - state.vMinKms) / Math.max(0.001, state.vMaxKms - state.vMinKms);
+                    const arrowLen = 32 + vNorm * 28;
+
+                    const arrowEndX = earthX + ux * arrowLen;
+                    const arrowEndY = earthY + uy * arrowLen;
+
+                    // Gambar garis vektor kecepatan v
+                    ctx.save();
+                    ctx.strokeStyle = '#34d399';
+                    ctx.fillStyle = '#34d399';
+                    ctx.lineWidth = 2.2;
+                    ctx.beginPath();
+                    ctx.moveTo(earthX, earthY);
+                    ctx.lineTo(arrowEndX, arrowEndY);
+                    ctx.stroke();
+
+                    // Kepala panah
+                    const angle = Math.atan2(uy, ux);
+                    ctx.beginPath();
+                    ctx.moveTo(arrowEndX, arrowEndY);
+                    ctx.lineTo(arrowEndX - 8 * Math.cos(angle - Math.PI / 6), arrowEndY - 8 * Math.sin(angle - Math.PI / 6));
+                    ctx.lineTo(arrowEndX - 8 * Math.cos(angle + Math.PI / 6), arrowEndY - 8 * Math.sin(angle + Math.PI / 6));
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Label nilai kecepatan langsung di dekat Bumi
+                    ctx.font = '600 11px "JetBrains Mono", monospace';
+                    ctx.fillStyle = '#6ee7b7';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`v = ${state.velocityKms.toFixed(2)} km/s`, earthX, earthY - 18);
+                    ctx.restore();
+
+                    // Planet Bumi
+                    ctx.save();
+                    const earthGlow = ctx.createRadialGradient(earthX, earthY, 2, earthX, earthY, 16);
+                    earthGlow.addColorStop(0, 'rgba(56, 189, 248, 0.9)');
+                    earthGlow.addColorStop(1, 'rgba(56, 189, 248, 0)');
+                    ctx.fillStyle = earthGlow;
+                    ctx.beginPath();
+                    ctx.arc(earthX, earthY, 16, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.beginPath();
+                    ctx.arc(earthX, earthY, 6.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Aksen benua hijau kecil
+                    ctx.fillStyle = '#34d399';
+                    ctx.beginPath();
+                    ctx.arc(earthX - 1.5, earthY - 1, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                } else {
+                    // Keterangan saat Mode Inspeksi Fokus aktif
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(251, 191, 36, 0.95)';
+                    ctx.font = '600 12px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('MODE INSPEKSI FOKUS (Perbesaran 7.5x di Pusat Orbit)', centerX, 62);
+                    ctx.font = '400 11px Inter, sans-serif';
+                    ctx.fillStyle = '#cbd5e1';
+                    ctx.fillText('Menunjukkan pergeseran nyata Matahari (F₁) sejauh 2.50 juta km dari Pusat Elips (O)', centerX, 80);
+                    ctx.restore();
+                }
+            }
+
+            // ============================================================================
+            // 7. VELOCITY CURVE GRAPH RENDERER
+            // ============================================================================
+            function drawVelocityGraph() {
+                const width = graphCanvas.width / (window.devicePixelRatio || 1);
+                const height = graphCanvas.height / (window.devicePixelRatio || 1);
+
+                gctx.clearRect(0, 0, width, height);
+
+                const padLeft = 42;
+                const padRight = 16;
+                const padTop = 14;
+                const padBottom = 22;
+                const plotW = width - padLeft - padRight;
+                const plotH = height - padTop - padBottom;
+
+                const e = state.currentEcc;
+                const vMax = state.vMaxKms;
+                const vMin = state.vMinKms;
+                const vSpan = Math.max(0.01, vMax - vMin);
+
+                // Grid lines
+                gctx.strokeStyle = 'rgba(148, 163, 184, 0.12)';
+                gctx.lineWidth = 1;
+                gctx.beginPath();
+                gctx.moveTo(padLeft, padTop);
+                gctx.lineTo(padLeft + plotW, padTop);
+                gctx.moveTo(padLeft, padTop + plotH / 2);
+                gctx.lineTo(padLeft + plotW, padTop + plotH / 2);
+                gctx.moveTo(padLeft, padTop + plotH);
+                gctx.lineTo(padLeft + plotW, padTop + plotH);
+                gctx.stroke();
+
+                // Axis Labels
+                gctx.fillStyle = '#64748b';
+                gctx.font = '400 9px "JetBrains Mono", monospace';
+                gctx.textAlign = 'right';
+                gctx.fillText(vMax.toFixed(1), padLeft - 5, padTop + 4);
+                gctx.fillText(MEAN_VELOCITY_KMS.toFixed(1), padLeft - 5, padTop + plotH / 2 + 3);
+                gctx.fillText(vMin.toFixed(1), padLeft - 5, padTop + plotH + 3);
+
+                gctx.textAlign = 'center';
+                gctx.fillText('Perihelion (Jan)', padLeft + 26, height - 5);
+                gctx.fillText('Aphelion (Jul)', padLeft + plotW / 2, height - 5);
+                gctx.fillText('Perihelion (Jan)', padLeft + plotW - 26, height - 5);
+
+                // Draw Velocity Curve v(t) across 1 full year
+                gctx.save();
+                const grad = gctx.createLinearGradient(0, padTop, 0, padTop + plotH);
+                grad.addColorStop(0, '#34d399');
+                grad.addColorStop(0.5, '#38bdf8');
+                grad.addColorStop(1, '#fb7185');
+                gctx.strokeStyle = grad;
+                gctx.lineWidth = 2;
+                gctx.beginPath();
+
+                const samples = 120;
+                for (let i = 0; i <= samples; i++) {
+                    const frac = i / samples;
+                    const M = frac * 2 * Math.PI;
+                    const st = computeOrbitalStateAtMeanAnomaly(M, e);
+                    const x = padLeft + frac * plotW;
+                    const yNorm = (st.vKms - vMin) / vSpan;
+                    const y = padTop + plotH - yNorm * plotH;
+                    if (i === 0) gctx.moveTo(x, y);
+                    else gctx.lineTo(x, y);
+                }
+                gctx.stroke();
+                gctx.restore();
+
+                // Draw Current Day Indicator Marker
+                const currentFrac = (state.daysElapsed % SIDEREAL_YEAR_DAYS) / SIDEREAL_YEAR_DAYS;
+                const markerX = padLeft + currentFrac * plotW;
+                const currentYNorm = (state.velocityKms - vMin) / vSpan;
+                const markerY = padTop + plotH - currentYNorm * plotH;
+
+                gctx.save();
+                gctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+                gctx.lineWidth = 1;
+                gctx.beginPath();
+                gctx.moveTo(markerX, padTop);
+                gctx.lineTo(markerX, padTop + plotH);
+                gctx.stroke();
+
+                gctx.fillStyle = '#ffffff';
+                gctx.beginPath();
+                gctx.arc(markerX, markerY, 4.5, 0, Math.PI * 2);
+                gctx.fill();
+                gctx.restore();
+            }
+
+            // ============================================================================
+            // 8. TELEMETRY UI UPDATER
+            // ============================================================================
+            function updateTelemetryUI() {
+                const dayInYear = state.daysElapsed % SIDEREAL_YEAR_DAYS;
+                const dateStr = formatCalendarDate(dayInYear);
+                simDateDisplay.textContent = `${dateStr} (Hari ke-${dayInYear.toFixed(1)})`;
+
+                const e = state.currentEcc;
+                const r = state.radiusMillionKm;
+                const rAU = r / SEMI_MAJOR_AXIS_KM;
+                const v = state.velocityKms;
+                const vKmh = Math.round(v * 3600).toLocaleString('id-ID');
+
+                valDistance.innerHTML = `${r.toFixed(2)} <span class="text-xs font-normal text-slate-400">jt km</span>`;
+                valDistanceAU.textContent = `${rAU.toFixed(4)} AU`;
+
+                valVelocity.innerHTML = `${v.toFixed(2)} <span class="text-xs font-normal text-slate-400">km/s</span>`;
+                valVelocityKmh.textContent = `${vKmh} km/jam`;
+
+                vMaxLabel.textContent = `${state.vMaxKms.toFixed(2)} km/s`;
+                vMinLabel.textContent = `${state.vMinKms.toFixed(2)} km/s`;
+
+                // Progress bar kecepatan relatif antara Aphelion (0%) dan Perihelion (100%)
+                const vSpan = Math.max(0.0001, state.vMaxKms - state.vMinKms);
+                const vPct = Math.min(100, Math.max(0, ((v - state.vMinKms) / vSpan) * 100));
+                velocityProgressBar.style.width = `${vPct.toFixed(1)}%`;
+
+                if (vPct > 85) {
+                    speedStatusBadge.textContent = 'Mendekati Perihelion (Cepat)';
+                    speedStatusBadge.className = 'font-mono font-medium text-emerald-400';
+                } else if (vPct < 15) {
+                    speedStatusBadge.textContent = 'Mendekati Aphelion (Lambat)';
+                    speedStatusBadge.className = 'font-mono font-medium text-rose-400';
+                } else {
+                    speedStatusBadge.textContent = 'Kecepatan Transisi Orbit';
+                    speedStatusBadge.className = 'font-mono font-medium text-amber-300';
+                }
+
+                // Geometry metrics
+                const cKm = SEMI_MAJOR_AXIS_KM * e;
+                const bKm = SEMI_MAJOR_AXIS_KM * Math.sqrt(1 - e * e);
+                valFocalShift.textContent = `${cKm.toFixed(2)} juta km`;
+                valAxesRatio.textContent = `${SEMI_MAJOR_AXIS_KM.toFixed(2)} / ${bKm.toFixed(2)} jt km`;
+
+                const degTheta = (state.trueAnomaly * 180) / Math.PI;
+                valTrueAnomaly.textContent = `${degTheta.toFixed(1)}°`;
+
+                // Kecepatan sudut sesaat d(theta)/dt sebanding dengan 1 / r^2 (Kekekalan Momentum Sudut)
+                const meanAngularDegPerDay = 360 / SIDEREAL_YEAR_DAYS;
+                const angularSpeed = meanAngularDegPerDay * Math.sqrt(1 - e * e) / Math.pow(rAU, 2);
+                valAngularSpeed.textContent = `${angularSpeed.toFixed(3)}° / hari`;
+            }
+
+            // ============================================================================
+            // 9. EVENT LISTENERS & INTERACTIVITY
+            // ============================================================================
+            btnPlayPause.addEventListener('click', () => {
+                state.isRunning = !state.isRunning;
+                playPauseText.textContent = state.isRunning ? 'Jeda' : 'Lanjutkan';
+                statusDot.className = state.isRunning
+                    ? 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse'
+                    : 'w-2 h-2 rounded-full bg-amber-400';
+            });
+
+            btnJumpPerihelion.addEventListener('click', () => {
+                state.daysElapsed = 0; // Perihelion (~3 Januari)
+                updateOrbitalPhysics();
+                updateTelemetryUI();
+            });
+
+            btnJumpAphelion.addEventListener('click', () => {
+                state.daysElapsed = SIDEREAL_YEAR_DAYS / 2; // Aphelion (~4 Juli)
+                updateOrbitalPhysics();
+                updateTelemetryUI();
+            });
+
+            btnResetReal.addEventListener('click', () => {
+                state.eccentricityMultiplier = 1;
+                state.zoomFocusMode = false;
+                sliderEcc.value = 1;
+                zoomStatusText.textContent = 'Off';
+                updateEccLabels();
+                updateOrbitalPhysics();
+                updateTelemetryUI();
+            });
+
+            btnZoomFocus.addEventListener('click', () => {
+                state.zoomFocusMode = !state.zoomFocusMode;
+                zoomStatusText.textContent = state.zoomFocusMode ? 'Aktif 7.5x' : 'Off';
+            });
+
+            sliderSpeed.addEventListener('input', (e) => {
+                state.simSpeedDaysPerSec = parseFloat(e.target.value);
+                labelSpeed.textContent = `${state.simSpeedDaysPerSec} hari / detik`;
+            });
+
+            function updateEccLabels() {
+                const mult = state.eccentricityMultiplier;
+                const effEcc = Math.min(0.65, REAL_ECCENTRICITY * mult);
+                if (mult === 1) {
+                    labelEcc.textContent = `1x (Asli e = ${REAL_ECCENTRICITY.toFixed(4)})`;
+                    scaleModeBadge.textContent = `Eksentrisitas: ${REAL_ECCENTRICITY.toFixed(4)} (Skala Asli 100%)`;
+                    scaleModeBadge.className = 'glass-panel px-2.5 py-1.5 rounded-xl text-[11px] font-mono text-sky-300 border border-sky-500/30';
+                } else {
+                    labelEcc.textContent = `${mult}x (e = ${effEcc.toFixed(3)})`;
+                    scaleModeBadge.textContent = `Eksentrisitas Diperbesar ${mult}x (e = ${effEcc.toFixed(3)})`;
+                    scaleModeBadge.className = 'glass-panel px-2.5 py-1.5 rounded-xl text-[11px] font-mono text-amber-300 border border-amber-500/40';
+                }
+            }
+
+            sliderEcc.addEventListener('input', (e) => {
+                state.eccentricityMultiplier = parseInt(e.target.value, 10);
+                updateEccLabels();
+                updateOrbitalPhysics();
+                updateTelemetryUI();
+            });
+
+            chkKeplerSweep.addEventListener('change', (e) => {
+                state.showKeplerSweep = e.target.checked;
+            });
+
+            chkRefCircle.addEventListener('change', (e) => {
+                state.showRefCircle = e.target.checked;
+            });
+
+            chkFociDetails.addEventListener('change', (e) => {
+                state.showFociDetails = e.target.checked;
+            });
+
+            // ============================================================================
+            // 9B. MODULE 2: LAB MENGHITUNG JARAK BUMI-MATAHARI (1 AU)
+            // ============================================================================
+            const tabModeOrbit = document.getElementById('tabModeOrbit');
+            const tabModeMeasureAU = document.getElementById('tabModeMeasureAU');
+            const orbitPresetGroup = document.getElementById('orbitPresetGroup');
+            const viewOrbitSection = document.getElementById('viewOrbitSection');
+            const viewMeasureAUSection = document.getElementById('viewMeasureAUSection');
+
+            const auLabCanvas = document.getElementById('auLabCanvas');
+            const lctx = auLabCanvas.getContext('2d');
+            const labCanvasTitle = document.getElementById('labCanvasTitle');
+            const radarActionOverlay = document.getElementById('radarActionOverlay');
+
+            const auMethodBtns = document.querySelectorAll('.au-method-btn');
+            const controlsParallax = document.getElementById('controlsParallax');
+            const controlsRadar = document.getElementById('controlsRadar');
+            const controlsAngular = document.getElementById('controlsAngular');
+
+            const sliderBaseline = document.getElementById('sliderBaseline');
+            const labelBaseline = document.getElementById('labelBaseline');
+            const sliderAngleError = document.getElementById('sliderAngleError');
+            const labelAngleError = document.getElementById('labelAngleError');
+            const btnResetParallaxIdeal = document.getElementById('btnResetParallaxIdeal');
+            const histPresetBtns = document.querySelectorAll('.hist-preset-btn');
+
+            const btnFireRadar = document.getElementById('btnFireRadar');
+            const btnTriggerRadarPanel = document.getElementById('btnTriggerRadarPanel');
+            const radarStatusText = document.getElementById('radarStatusText');
+            const radarTimerText = document.getElementById('radarTimerText');
+
+            const sliderDayAngular = document.getElementById('sliderDayAngular');
+            const labelDayAngular = document.getElementById('labelDayAngular');
+            const valSolarAngularDiam = document.getElementById('valSolarAngularDiam');
+            const valSolarInstantDist = document.getElementById('valSolarInstantDist');
+
+            // Readout DOM Elements
+            const auMethodTag = document.getElementById('auMethodTag');
+            const resMeasuredAU = document.getElementById('resMeasuredAU');
+            const resExactKm = document.getElementById('resExactKm');
+            const resSolarParallax = document.getElementById('resSolarParallax');
+            const resLightTime = document.getElementById('resLightTime');
+            const resAccuracyBadge = document.getElementById('resAccuracyBadge');
+
+            const step2Title = document.getElementById('step2Title');
+            const step2Desc = document.getElementById('step2Desc');
+            const step2FormulaBox = document.getElementById('step2FormulaBox');
+            const mathFinalAUResult = document.getElementById('mathFinalAUResult');
+            const mathErrorRate = document.getElementById('mathErrorRate');
+
+            const labState = {
+                activeTab: 'orbit',         // 'orbit' | 'measureAU'
+                method: 'parallax',         // 'parallax' | 'radar' | 'angular'
+                baselineKm: 9500,           // Jarak 2 observatorium di Bumi (km)
+                angleErrorArcsec: 0.0,      // Simulasi kesalahan ukur sudut (arcsec)
+
+                // Radar animation state
+                radarActive: false,
+                radarProgress: 0,           // 0 to 2 (0->1 berangkat ke Venus, 1->2 kembali ke Bumi)
+
+                // Angular diameter state
+                dayAngular: 0,              // 0 to 365
+
+                // Computed outputs
+                measuredAUKm: 149597870.7,
+                solarParallaxArcsec: 8.794,
+                venusShiftArcsec: 31.4
+            };
+
+            function switchMainView(mode) {
+                labState.activeTab = mode;
+                if (mode === 'orbit') {
+                    viewOrbitSection.classList.remove('hidden');
+                    viewMeasureAUSection.classList.add('hidden');
+                    viewMeasureAUSection.classList.remove('flex');
+                    orbitPresetGroup.classList.remove('hidden');
+
+                    tabModeOrbit.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-500 text-slate-950 shadow transition flex items-center gap-1.5';
+                    tabModeMeasureAU.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg text-amber-300 hover:bg-slate-800/80 transition flex items-center gap-1.5';
+                    resizeCanvases();
+                } else {
+                    viewOrbitSection.classList.add('hidden');
+                    viewMeasureAUSection.classList.remove('hidden');
+                    viewMeasureAUSection.classList.add('flex');
+                    orbitPresetGroup.classList.add('hidden');
+
+                    tabModeMeasureAU.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 text-slate-950 shadow transition flex items-center gap-1.5';
+                    tabModeOrbit.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg text-sky-300 hover:bg-slate-800/80 transition flex items-center gap-1.5';
+                    resizeCanvases();
+                    updateLabCalculations();
+                }
+            }
+
+            tabModeOrbit.addEventListener('click', () => switchMainView('orbit'));
+            tabModeMeasureAU.addEventListener('click', () => switchMainView('measureAU'));
+
+            auMethodBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const m = btn.getAttribute('data-method');
+                    labState.method = m;
+
+                    auMethodBtns.forEach(b => {
+                        b.className = 'au-method-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-space-800 hover:bg-space-700 text-slate-300 border border-slate-700 transition flex items-center gap-2';
+                    });
+                    btn.className = 'au-method-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 transition flex items-center gap-2';
+
+                    controlsParallax.classList.toggle('hidden', m !== 'parallax');
+                    controlsRadar.classList.toggle('hidden', m !== 'radar');
+                    controlsAngular.classList.toggle('hidden', m !== 'angular');
+                    radarActionOverlay.classList.toggle('hidden', m !== 'radar');
+
+                    if (m === 'parallax') {
+                        labCanvasTitle.textContent = 'Simulasi Geometri Paralaks & Transit Venus';
+                        auMethodTag.textContent = 'Metode Paralaks';
+                    } else if (m === 'radar') {
+                        labCanvasTitle.textContent = 'Simulasi Telemetri Radar Bumi–Venus (Kecepatan Cahaya)';
+                        auMethodTag.textContent = 'Metode Radar Modern';
+                    } else {
+                        labCanvasTitle.textContent = 'Simulasi Heliometer & Variasi Diameter Sudut Matahari';
+                        auMethodTag.textContent = 'Metode Diameter Sudut';
+                    }
+
+                    updateLabCalculations();
+                });
+            });
+
+            function updateLabCalculations() {
+                const trueAUKm = 149597870.7;
+                const dVenusRatio = 1 - VENUS_SEMI_MAJOR_AU; // 0.276668 AU
+                const trueEarthVenusKm = trueAUKm * dVenusRatio; // ~41,388,943 km
+
+                if (labState.method === 'parallax') {
+                    const B = labState.baselineKm;
+                    // Sudut paralaks sejati terhadap Venus dari baseline B: theta_v = B / d_bv (rad)
+                    // Sudut paralaks terhadap latar piringan Matahari: theta_net = B * (1/d_bv - 1/AU)
+                    const trueParallaxVenusRad = B / trueEarthVenusKm;
+                    const trueParallaxVenusArcsec = trueParallaxVenusRad * (180 / Math.PI) * 3600;
+
+                    // Tambahkan galat sudut pengamatan (arcsec)
+                    const measuredVenusArcsec = Math.max(2.0, trueParallaxVenusArcsec + labState.angleErrorArcsec);
+                    const measuredVenusRad = (measuredVenusArcsec / 3600) * (Math.PI / 180);
+
+                    // Hitung jarak Bumi-Venus dari sudut terukur: d_bv = B / tan(theta_v)
+                    const measuredEarthVenusKm = B / Math.tan(measuredVenusRad);
+                    const measuredAUKm = measuredEarthVenusKm / dVenusRatio;
+
+                    labState.measuredAUKm = measuredAUKm;
+                    labState.venusShiftArcsec = measuredVenusArcsec;
+
+                    // Paralaks Matahari ekuatorial standar (π_⊙ = arctan(R_bumi / 1 AU))
+                    const solarParallaxRad = EARTH_RADIUS_KM / measuredAUKm;
+                    labState.solarParallaxArcsec = solarParallaxRad * (180 / Math.PI) * 3600;
+
+                    step2Title.textContent = 'Tahap 2: Triangulasi Paralaks';
+                    step2Desc.innerHTML = `Dua pengamat terpisah sejauh <span class="font-mono text-slate-200">B = ${B.toLocaleString('id-ID')} km</span> mengukur sudut paralaks Venus <span class="font-mono text-amber-300">Δθᵥ = ${measuredVenusArcsec.toFixed(2)}"</span>:`;
+                    step2FormulaBox.innerHTML = `
+                        <div class="text-slate-300">d_bv = ${B.toLocaleString('id-ID')} / tan(${measuredVenusArcsec.toFixed(2)}")</div>
+                        <div class="text-amber-300 font-bold">d_bv = ${Math.round(measuredEarthVenusKm).toLocaleString('id-ID')} km</div>
+                        <div class="text-slate-500 text-[10px]">Jarak terukur Bumi ke Venus</div>
+                    `;
+                } else if (labState.method === 'radar') {
+                    // Waktu tempuh radar pulang-pergi ke Venus saat konjungsi inferior:
+                    const roundTripSec = (2 * trueEarthVenusKm) / SPEED_OF_LIGHT_KMS; // ~276.117 detik
+                    const measuredEarthVenusKm = (SPEED_OF_LIGHT_KMS * roundTripSec) / 2;
+                    const measuredAUKm = measuredEarthVenusKm / dVenusRatio;
+
+                    labState.measuredAUKm = measuredAUKm;
+                    labState.solarParallaxArcsec = (EARTH_RADIUS_KM / measuredAUKm) * (180 / Math.PI) * 3600;
+
+                    step2Title.textContent = 'Tahap 2: Waktu Tempuh Radar (Δt)';
+                    step2Desc.innerHTML = `Sinyal radio merambat dengan laju cahaya <span class="font-mono text-slate-200">c = 299,792.458 km/s</span> memantul dari Venus dalam <span class="font-mono text-emerald-300">Δt = ${roundTripSec.toFixed(4)} dtk</span>:`;
+                    step2FormulaBox.innerHTML = `
+                        <div class="text-slate-300">d_bv = (c × ${roundTripSec.toFixed(3)}s) / 2</div>
+                        <div class="text-emerald-300 font-bold">d_bv = ${Math.round(measuredEarthVenusKm).toLocaleString('id-ID')} km</div>
+                        <div class="text-slate-500 text-[10px]">Presisi skala meter</div>
+                    `;
+                } else if (labState.method === 'angular') {
+                    // Hitung posisi orbit Bumi pada hari ke-dayAngular
+                    const M = (labState.dayAngular / SIDEREAL_YEAR_DAYS) * 2 * Math.PI;
+                    const st = computeOrbitalStateAtMeanAnomaly(M, REAL_ECCENTRICITY);
+                    const rInstantKm = st.rMillionKm * 1e6;
+
+                    // Diameter sudut Matahari (rad & arcmin/arcsec)
+                    const alphaRad = 2 * Math.atan(SUN_DIAMETER_KM / (2 * rInstantKm));
+                    const alphaDeg = alphaRad * (180 / Math.PI);
+                    const totalArcsec = alphaDeg * 3600;
+                    const arcMin = Math.floor(totalArcsec / 60);
+                    const arcSec = (totalArcsec % 60).toFixed(1);
+
+                    valSolarAngularDiam.textContent = `${alphaDeg.toFixed(4)}° (${arcMin}' ${arcSec}")`;
+                    valSolarInstantDist.textContent = `${st.rMillionKm.toFixed(2)} Juta km`;
+
+                    labState.measuredAUKm = trueAUKm;
+                    labState.solarParallaxArcsec = 8.794143;
+
+                    step2Title.textContent = 'Tahap 2: Heliometer Diameter Sudut';
+                    step2Desc.innerHTML = `Pada hari ke-${labState.dayAngular}, piringan Matahari (<span class="font-mono text-slate-200">D_⊙ = 1.3927 jt km</span>) tampak berukuran sudut <span class="font-mono text-amber-300">α = ${arcMin}' ${arcSec}"</span>:`;
+                    step2FormulaBox.innerHTML = `
+                        <div class="text-slate-300">r(t) = D_⊙ / (2·tan(α/2))</div>
+                        <div class="text-sky-300 font-bold">r(t) = ${Math.round(rInstantKm).toLocaleString('id-ID')} km</div>
+                        <div class="text-slate-500 text-[10px]">a = r(t) / (1 - e·cos E)</div>
+                    `;
+                }
+
+                // Update Common Summary Cards
+                const auMillion = labState.measuredAUKm / 1e6;
+                resMeasuredAU.innerHTML = `${auMillion.toFixed(2)} <span class="text-xs font-normal text-sky-400">Juta km</span>`;
+                resExactKm.textContent = `${Math.round(labState.measuredAUKm).toLocaleString('id-ID')} km`;
+                resSolarParallax.innerHTML = `${labState.solarParallaxArcsec.toFixed(3)}" <span class="text-xs font-normal text-slate-400">detik busur</span>`;
+
+                const lightSeconds = labState.measuredAUKm / SPEED_OF_LIGHT_KMS;
+                const lMin = Math.floor(lightSeconds / 60);
+                const lSec = (lightSeconds % 60).toFixed(1);
+                resLightTime.textContent = `Waktu Cahaya: ${lMin}m ${lSec}d`;
+
+                const errPct = Math.abs((labState.measuredAUKm - trueAUKm) / trueAUKm) * 100;
+                const accuracyPct = Math.max(0, 100 - errPct);
+                resAccuracyBadge.textContent = `Galat: ${errPct.toFixed(2)}%`;
+                resAccuracyBadge.className = errPct < 0.5 ? 'text-emerald-400 font-semibold' : 'text-amber-400 font-semibold';
+
+                mathFinalAUResult.textContent = `${Math.round(labState.measuredAUKm).toLocaleString('id-ID')} km`;
+                mathErrorRate.textContent = `Akurasi: ${accuracyPct.toFixed(2)}% (Galat ${errPct.toFixed(2)}%)`;
+            }
+
+            sliderBaseline.addEventListener('input', (e) => {
+                labState.baselineKm = parseFloat(e.target.value);
+                labelBaseline.textContent = `${labState.baselineKm.toLocaleString('id-ID')} km`;
+                updateLabCalculations();
+            });
+
+            sliderAngleError.addEventListener('input', (e) => {
+                labState.angleErrorArcsec = parseFloat(e.target.value);
+                const sign = labState.angleErrorArcsec > 0 ? '+' : '';
+                labelAngleError.textContent = `${sign}${labState.angleErrorArcsec.toFixed(2)}" ${Math.abs(labState.angleErrorArcsec) < 0.03 ? '(Presisi)' : '(Bias Optik)'}`;
+                updateLabCalculations();
+            });
+
+            btnResetParallaxIdeal.addEventListener('click', () => {
+                labState.baselineKm = 9500;
+                labState.angleErrorArcsec = 0;
+                sliderBaseline.value = 9500;
+                sliderAngleError.value = 0;
+                labelBaseline.textContent = '9,500 km';
+                labelAngleError.textContent = '0.00" (Teleskop Modern)';
+                updateLabCalculations();
+            });
+
+            histPresetBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const preset = btn.getAttribute('data-hist');
+                    if (preset === 'cassini') {
+                        labState.baselineKm = 7000;
+                        labState.angleErrorArcsec = 1.45;
+                    } else if (preset === 'cook') {
+                        labState.baselineKm = 9800;
+                        labState.angleErrorArcsec = -0.65;
+                    } else {
+                        labState.baselineKm = 9500;
+                        labState.angleErrorArcsec = 0.0;
+                    }
+                    sliderBaseline.value = labState.baselineKm;
+                    sliderAngleError.value = labState.angleErrorArcsec;
+                    labelBaseline.textContent = `${labState.baselineKm.toLocaleString('id-ID')} km`;
+                    const sign = labState.angleErrorArcsec > 0 ? '+' : '';
+                    labelAngleError.textContent = `${sign}${labState.angleErrorArcsec.toFixed(2)}"`;
+                    updateLabCalculations();
+                });
+            });
+
+            function triggerRadarPulse() {
+                labState.radarActive = true;
+                labState.radarProgress = 0;
+                radarStatusText.textContent = 'Mentransmisikan Gelombang...';
+                radarStatusText.className = 'text-amber-300 font-bold animate-pulse';
+            }
+
+            btnFireRadar.addEventListener('click', triggerRadarPulse);
+            btnTriggerRadarPanel.addEventListener('click', triggerRadarPulse);
+
+            sliderDayAngular.addEventListener('input', (e) => {
+                labState.dayAngular = parseInt(e.target.value, 10);
+                const dateStr = formatCalendarDate(labState.dayAngular);
+                labelDayAngular.textContent = `Hari ke-${labState.dayAngular} (${dateStr})`;
+                updateLabCalculations();
+            });
+
+            // ============================================================================
+            // 9C. RENDERER FOR MODULE 2 CANVAS (PARALLAX, RADAR, AND ANGULAR DIAMETER)
+            // ============================================================================
+            function drawAULabScene(dtSeconds) {
+                if (labState.activeTab !== 'measureAU') return;
+
+                const dpr = window.devicePixelRatio || 1;
+                const width = auLabCanvas.width / dpr;
+                const height = auLabCanvas.height / dpr;
+
+                lctx.clearRect(0, 0, width, height);
+
+                // Background stars
+                for (const star of state.stars) {
+                    lctx.fillStyle = `rgba(226, 232, 240, ${star.alpha * 0.8})`;
+                    lctx.beginPath();
+                    lctx.arc(star.x * width, star.y * height, star.size, 0, Math.PI * 2);
+                    lctx.fill();
+                }
+
+                if (labState.method === 'parallax' || labState.method === 'radar') {
+                    drawParallaxAndRadarDiagram(width, height, dtSeconds);
+                } else {
+                    drawAngularDiameterDiagram(width, height);
+                }
+            }
+
+            function drawParallaxAndRadarDiagram(width, height, dtSeconds) {
+                const cy = height * 0.52;
+                const earthX = width * 0.13;
+                const venusX = width * 0.44;
+                const sunX = width * 0.78;
+
+                // 1. Draw Dimension Bars at Bottom (0.2767 AU and 0.7233 AU = 1.0000 AU)
+                const dimY = height - 28;
+                lctx.save();
+                lctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+                lctx.lineWidth = 1.2;
+
+                // Full 1 AU line
+                lctx.beginPath();
+                lctx.moveTo(earthX, dimY);
+                lctx.lineTo(sunX, dimY);
+                lctx.stroke();
+
+                // Ticks
+                [earthX, venusX, sunX].forEach(x => {
+                    lctx.beginPath();
+                    lctx.moveTo(x, dimY - 5);
+                    lctx.lineTo(x, dimY + 5);
+                    lctx.stroke();
+                });
+
+                lctx.font = '600 10px "JetBrains Mono", monospace';
+                lctx.textAlign = 'center';
+                lctx.fillStyle = '#34d399';
+                lctx.fillText('d_bv = 0.2767 AU (~41.4 jt km)', (earthX + venusX) / 2, dimY - 8);
+                lctx.fillStyle = '#38bdf8';
+                lctx.fillText('a_v = 0.7233 AU (~108.2 jt km)', (venusX + sunX) / 2, dimY - 8);
+                lctx.fillStyle = '#fde047';
+                lctx.fillText('TOTAL 1 AU = 149.60 Juta km (Jarak Bumi - Matahari)', (earthX + sunX) / 2, dimY + 15);
+                lctx.restore();
+
+                // 2. Draw Sun on Right
+                const sunRadius = Math.min(width, height) * 0.15;
+                lctx.save();
+                const sunGrad = lctx.createRadialGradient(sunX, cy, 4, sunX, cy, sunRadius * 1.35);
+                sunGrad.addColorStop(0, '#fef08a');
+                sunGrad.addColorStop(0.65, '#f59e0b');
+                sunGrad.addColorStop(0.85, 'rgba(234, 88, 12, 0.5)');
+                sunGrad.addColorStop(1, 'rgba(234, 88, 12, 0)');
+                lctx.fillStyle = sunGrad;
+                lctx.beginPath();
+                lctx.arc(sunX, cy, sunRadius * 1.35, 0, Math.PI * 2);
+                lctx.fill();
+
+                lctx.strokeStyle = 'rgba(254, 240, 138, 0.6)';
+                lctx.lineWidth = 1.5;
+                lctx.beginPath();
+                lctx.arc(sunX, cy, sunRadius, 0, Math.PI * 2);
+                lctx.stroke();
+
+                lctx.fillStyle = '#fde047';
+                lctx.font = '600 11px Inter, sans-serif';
+                lctx.textAlign = 'center';
+                lctx.fillText('PIRINGAN MATAHARI', sunX, cy - sunRadius - 12);
+                lctx.restore();
+
+                // 3. Draw Earth on Left
+                const earthRadius = 34;
+                lctx.save();
+                const earthGrad = lctx.createRadialGradient(earthX - 8, cy - 8, 4, earthX, cy, earthRadius);
+                earthGrad.addColorStop(0, '#38bdf8');
+                earthGrad.addColorStop(1, '#0369a1');
+                lctx.fillStyle = earthGrad;
+                lctx.beginPath();
+                lctx.arc(earthX, cy, earthRadius, 0, Math.PI * 2);
+                lctx.fill();
+                lctx.strokeStyle = '#7dd3fc';
+                lctx.lineWidth = 1.5;
+                lctx.stroke();
+
+                lctx.fillStyle = '#e0f2fe';
+                lctx.font = '600 11px Inter, sans-serif';
+                lctx.textAlign = 'center';
+                lctx.fillText('BUMI', earthX, cy - earthRadius - 12);
+                lctx.restore();
+
+                // 4. Calculate Observer A (Top) & Observer B (Bottom) on Earth
+                const bNorm = Math.min(1, labState.baselineKm / 12742);
+                const halfBaselinePx = Math.max(8, bNorm * (earthRadius - 4));
+                const obsAY = cy - halfBaselinePx;
+                const obsBY = cy + halfBaselinePx;
+                const obsX = earthX + Math.sqrt(Math.max(0, earthRadius * earthRadius - halfBaselinePx * halfBaselinePx));
+
+                // Draw Baseline B chord on Earth
+                lctx.save();
+                lctx.strokeStyle = '#f43f5e';
+                lctx.lineWidth = 2.5;
+                lctx.beginPath();
+                lctx.moveTo(obsX, obsAY);
+                lctx.lineTo(obsX, obsBY);
+                lctx.stroke();
+
+                // Observer Dots
+                lctx.fillStyle = '#38bdf8';
+                lctx.beginPath();
+                lctx.arc(obsX, obsAY, 4, 0, Math.PI * 2);
+                lctx.fill();
+                lctx.fillStyle = '#fb7185';
+                lctx.beginPath();
+                lctx.arc(obsX, obsBY, 4, 0, Math.PI * 2);
+                lctx.fill();
+
+                lctx.font = '600 10px "JetBrains Mono", monospace';
+                lctx.textAlign = 'right';
+                lctx.fillStyle = '#7dd3fc';
+                lctx.fillText('Obs Utara (A)', obsX - 8, obsAY + 3);
+                lctx.fillStyle = '#fda4af';
+                lctx.fillText('Obs Selatan (B)', obsX - 8, obsBY + 3);
+                lctx.fillStyle = '#fcd34d';
+                lctx.fillText(`B = ${labState.baselineKm} km`, obsX - 10, cy + 3);
+                lctx.restore();
+
+                // 5. Draw Sightlines from A & B through Venus to Sun Disk (if Parallax Mode)
+                if (labState.method === 'parallax') {
+                    // Project rays from (obsX, obsAY) and (obsX, obsBY) through (venusX, cy) to sunX
+                    const slopeA = (cy - obsAY) / (venusX - obsX);
+                    const slopeB = (cy - obsBY) / (venusX - obsX);
+
+                    // Include slight visual shift for angleErrorArcsec
+                    const errOffsetPx = labState.angleErrorArcsec * 6;
+                    const projAY = cy + slopeA * (sunX - venusX) + errOffsetPx;
+                    const projBY = cy + slopeB * (sunX - venusX) - errOffsetPx;
+
+                    // Ray A (North -> Lower Track on Sun)
+                    lctx.save();
+                    lctx.strokeStyle = 'rgba(56, 189, 248, 0.75)';
+                    lctx.lineWidth = 1.4;
+                    lctx.setLineDash([4, 4]);
+                    lctx.beginPath();
+                    lctx.moveTo(obsX, obsAY);
+                    lctx.lineTo(sunX, projAY);
+                    lctx.stroke();
+
+                    // Ray B (South -> Upper Track on Sun)
+                    lctx.strokeStyle = 'rgba(251, 113, 133, 0.75)';
+                    lctx.beginPath();
+                    lctx.moveTo(obsX, obsBY);
+                    lctx.lineTo(sunX, projBY);
+                    lctx.stroke();
+                    lctx.restore();
+
+                    // Draw Transit Chord Tracks on Sun Disk
+                    lctx.save();
+                    lctx.strokeStyle = 'rgba(15, 23, 42, 0.55)';
+                    lctx.lineWidth = 1.5;
+                    [projAY, projBY].forEach((py, idx) => {
+                        const dy = py - cy;
+                        if (Math.abs(dy) < sunRadius) {
+                            const halfChord = Math.sqrt(sunRadius * sunRadius - dy * dy);
+                            lctx.beginPath();
+                            lctx.moveTo(sunX - halfChord, py);
+                            lctx.lineTo(sunX + halfChord, py);
+                            lctx.stroke();
+
+                            // Apparent black drop of Venus on Sun disk
+                            lctx.fillStyle = idx === 0 ? '#0284c7' : '#e11d48';
+                            lctx.beginPath();
+                            lctx.arc(sunX, py, 5, 0, Math.PI * 2);
+                            lctx.fill();
+                        }
+                    });
+
+                    // Angle annotation at Venus
+                    lctx.fillStyle = '#fde047';
+                    lctx.font = '600 11px "JetBrains Mono", monospace';
+                    lctx.textAlign = 'center';
+                    lctx.fillText(`Sudut Paralaks Δθᵥ = ${labState.venusShiftArcsec.toFixed(2)}"`, venusX, cy - 26);
+                    lctx.restore();
+                }
+
+                // 6. Draw Radar Wave Animation (if Radar Mode)
+                if (labState.method === 'radar') {
+                    lctx.save();
+                    lctx.strokeStyle = 'rgba(16, 185, 129, 0.35)';
+                    lctx.lineWidth = 2;
+                    lctx.setLineDash([6, 4]);
+                    lctx.beginPath();
+                    lctx.moveTo(earthX + earthRadius, cy);
+                    lctx.lineTo(venusX, cy);
+                    lctx.stroke();
+                    lctx.restore();
+
+                    if (labState.radarActive) {
+                        labState.radarProgress += dtSeconds * 0.75; // ~2.6s full animation
+                        const p = labState.radarProgress;
+                        const startX = earthX + earthRadius;
+                        const endX = venusX;
+
+                        let pulseX = startX;
+                        let isReturning = false;
+                        if (p <= 1) {
+                            pulseX = startX + (endX - startX) * p;
+                        } else if (p <= 2) {
+                            isReturning = true;
+                            pulseX = endX - (endX - startX) * (p - 1);
+                        } else {
+                            labState.radarActive = false;
+                            radarStatusText.textContent = 'Gema Diterima! (Δt = 276.15 dtk)';
+                            radarStatusText.className = 'text-emerald-400 font-bold';
+                        }
+
+                        if (labState.radarActive) {
+                            const currentSimSec = (Math.min(2, p) / 2) * 276.1502;
+                            radarTimerText.textContent = `${currentSimSec.toFixed(2)} detik`;
+
+                            lctx.save();
+                            lctx.strokeStyle = isReturning ? '#38bdf8' : '#34d399';
+                            lctx.lineWidth = 3;
+                            for (let w = -1; w <= 1; w++) {
+                                lctx.beginPath();
+                                const dir = isReturning ? -1 : 1;
+                                lctx.arc(pulseX + w * 8 * dir, cy, 12, -Math.PI / 3, Math.PI / 3, isReturning);
+                                lctx.stroke();
+                            }
+                            lctx.restore();
+                        }
+                    }
+                }
+
+                // 7. Draw Venus Planet in Middle
+                lctx.save();
+                lctx.fillStyle = '#fbbf24';
+                lctx.beginPath();
+                lctx.arc(venusX, cy, 10, 0, Math.PI * 2);
+                lctx.fill();
+                lctx.strokeStyle = '#fef08a';
+                lctx.lineWidth = 1.5;
+                lctx.stroke();
+
+                lctx.fillStyle = '#fde68a';
+                lctx.font = '600 11px Inter, sans-serif';
+                lctx.textAlign = 'center';
+                lctx.fillText('VENUS', venusX, cy + 24);
+                lctx.restore();
+            }
+
+            function drawAngularDiameterDiagram(width, height) {
+                const M = (labState.dayAngular / SIDEREAL_YEAR_DAYS) * 2 * Math.PI;
+                const st = computeOrbitalStateAtMeanAnomaly(M, REAL_ECCENTRICITY);
+                const rAU = st.rRatio; // ~0.983 to 1.017
+
+                // Left side: Geometric Cone from Earth to Sun Disk
+                const leftCenterY = height * 0.52;
+                const earthX = width * 0.12;
+                const sunX = width * 0.52;
+                const visualSunRadius = 46 / rAU;
+
+                // Cone lines
+                lctx.save();
+                lctx.fillStyle = 'rgba(251, 191, 36, 0.12)';
+                lctx.beginPath();
+                lctx.moveTo(earthX, leftCenterY);
+                lctx.lineTo(sunX, leftCenterY - visualSunRadius);
+                lctx.lineTo(sunX, leftCenterY + visualSunRadius);
+                lctx.closePath();
+                lctx.fill();
+
+                lctx.strokeStyle = '#fbbf24';
+                lctx.lineWidth = 1.5;
+                lctx.beginPath();
+                lctx.moveTo(earthX, leftCenterY);
+                lctx.lineTo(sunX, leftCenterY - visualSunRadius);
+                lctx.moveTo(earthX, leftCenterY);
+                lctx.lineTo(sunX, leftCenterY + visualSunRadius);
+                lctx.stroke();
+
+                // Earth
+                lctx.fillStyle = '#38bdf8';
+                lctx.beginPath();
+                lctx.arc(earthX, leftCenterY, 10, 0, Math.PI * 2);
+                lctx.fill();
+                lctx.font = '600 11px Inter, sans-serif';
+                lctx.textAlign = 'center';
+                lctx.fillText('Teleskop Bumi', earthX, leftCenterY + 26);
+
+                // Sun Physical Diameter Line
+                lctx.fillStyle = '#f59e0b';
+                lctx.beginPath();
+                lctx.arc(sunX, leftCenterY, visualSunRadius, 0, Math.PI * 2);
+                lctx.fill();
+
+                lctx.strokeStyle = '#ffffff';
+                lctx.lineWidth = 2;
+                lctx.beginPath();
+                lctx.moveTo(sunX, leftCenterY - visualSunRadius);
+                lctx.lineTo(sunX, leftCenterY + visualSunRadius);
+                lctx.stroke();
+
+                lctx.fillStyle = '#fde047';
+                lctx.font = '600 11px "JetBrains Mono", monospace';
+                lctx.fillText('D_⊙ = 1,392,700 km', sunX, leftCenterY - visualSunRadius - 12);
+                lctx.fillStyle = '#38bdf8';
+                lctx.fillText(`r = ${st.rMillionKm.toFixed(2)} Juta km`, (earthX + sunX) / 2, leftCenterY + visualSunRadius + 24);
+                lctx.restore();
+
+                // Right side: Eyepiece Heliometer Comparison (Perihelion vs Aphelion vs Current)
+                const eyeX = width * 0.80;
+                const eyeY = height * 0.52;
+                const baseEyeR = Math.min(width, height) * 0.22;
+                // Exaggerate visual difference slightly so user can clearly inspect the 3.4% shift on crosshair
+                const scaleDiff = 1 + (1 - rAU) * 4.5;
+                const currentDiskR = baseEyeR * scaleDiff;
+
+                lctx.save();
+                // Eyepiece Frame
+                lctx.fillStyle = '#090d16';
+                lctx.strokeStyle = '#334155';
+                lctx.lineWidth = 3;
+                lctx.beginPath();
+                lctx.arc(eyeX, eyeY, baseEyeR * 1.32, 0, Math.PI * 2);
+                lctx.fill();
+                lctx.stroke();
+
+                // Reference Perihelion (Max) & Aphelion (Min) Rings
+                lctx.setLineDash([4, 4]);
+                lctx.strokeStyle = 'rgba(52, 211, 153, 0.55)';
+                lctx.lineWidth = 1.2;
+                lctx.beginPath();
+                lctx.arc(eyeX, eyeY, baseEyeR * (1 + REAL_ECCENTRICITY * 4.5), 0, Math.PI * 2);
+                lctx.stroke();
+
+                lctx.strokeStyle = 'rgba(251, 113, 133, 0.55)';
+                lctx.beginPath();
+                lctx.arc(eyeX, eyeY, baseEyeR * (1 - REAL_ECCENTRICITY * 4.5), 0, Math.PI * 2);
+                lctx.stroke();
+                lctx.setLineDash([]);
+
+                // Current Sun Disk in Eyepiece
+                const diskGrad = lctx.createRadialGradient(eyeX, eyeY, 5, eyeX, eyeY, currentDiskR);
+                diskGrad.addColorStop(0, '#fef08a');
+                diskGrad.addColorStop(0.85, '#f59e0b');
+                diskGrad.addColorStop(1, '#ea580c');
+                lctx.fillStyle = diskGrad;
+                lctx.beginPath();
+                lctx.arc(eyeX, eyeY, currentDiskR, 0, Math.PI * 2);
+                lctx.fill();
+
+                lctx.fillStyle = '#e2e8f0';
+                lctx.font = '600 11px Inter, sans-serif';
+                lctx.textAlign = 'center';
+                lctx.fillText('Tampilan Heliometer', eyeX, eyeY - baseEyeR * 1.32 - 10);
+                lctx.restore();
+            }
+
+            const origResizeCanvases = resizeCanvases;
+            resizeCanvases = function() {
+                origResizeCanvases();
+                if (auLabCanvas && auLabCanvas.parentElement) {
+                    const dpr = window.devicePixelRatio || 1;
+                    const lRect = auLabCanvas.parentElement.getBoundingClientRect();
+                    if (lRect.width > 0 && lRect.height > 0) {
+                        auLabCanvas.width = lRect.width * dpr;
+                        auLabCanvas.height = lRect.height * dpr;
+                        lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                    }
+                }
+            };
+
+            window.addEventListener('resize', () => {
+                resizeCanvases();
+                drawOrbitScene();
+                drawVelocityGraph();
+                drawAULabScene(0);
+            });
+
+            // ============================================================================
+            // 10. ANIMATION LOOP
+            // ============================================================================
+            let lastTimestamp = performance.now();
+
+            function animate(now) {
+                const dtSeconds = Math.min(0.1, (now - lastTimestamp) / 1000);
+                lastTimestamp = now;
+
+                if (state.isRunning) {
+                    state.daysElapsed = (state.daysElapsed + dtSeconds * state.simSpeedDaysPerSec) % SIDEREAL_YEAR_DAYS;
+                    updateOrbitalPhysics();
+                    updateTelemetryUI();
+                }
+
+                if (labState.activeTab === 'orbit') {
+                    drawOrbitScene();
+                    drawVelocityGraph();
+                } else {
+                    drawAULabScene(dtSeconds);
+                }
+                requestAnimationFrame(animate);
+            }
+
+            window.onload = function() {
+                generateStars(110);
+                resizeCanvases();
+                updateEccLabels();
+                updateOrbitalPhysics();
+                updateTelemetryUI();
+                updateLabCalculations();
+                requestAnimationFrame(animate);
+            };
+        })();
+    </script>
+</body>
+</html>
