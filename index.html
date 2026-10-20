@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>debunkFE – Simulasi Sains untuk Membantah Bumi Datar</title>
+<meta name="description" content="Kumpulan simulasi interaktif dan materi untuk menguji klaim bumi datar dengan sains dan matematika.">
+<style>
+:root{
+  --bg:#f6f7fb; --card:#ffffff; --text:#1b2236; --muted:#5b647a;
+  --accent:#2563eb; --accent2:#0ea5e9; --border:#e3e6ef; --shadow:0 6px 24px rgba(20,30,60,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#0b1020; --card:#131a2e; --text:#e8ecf7; --muted:#9aa5c0; --accent:#60a5fa; --accent2:#38bdf8; --border:#222c47; --shadow:0 6px 24px rgba(0,0,0,.4);}
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+header.hero{padding:72px 0 56px;text-align:center;background:radial-gradient(ellipse at top,rgba(37,99,235,.18),transparent 65%)}
+.globe{font-size:56px;margin-bottom:12px}
+h1{font-size:clamp(2rem,5vw,3.2rem);letter-spacing:-.02em;line-height:1.15}
+h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:640px;margin:16px auto 0;color:var(--muted);font-size:1.08rem}
+.cta{margin-top:28px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{padding:11px 22px;border-radius:999px;font-weight:600;border:1px solid var(--border);background:var(--card)}
+.btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:none}
+.btn:hover{transform:translateY(-1px)}
+section{padding:40px 0}
+h2{font-size:1.6rem;margin-bottom:6px}
+.sub{color:var(--muted);margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px;transition:transform .15s,border-color .15s}
+.card:hover{transform:translateY(-4px);border-color:var(--accent)}
+.icon{font-size:30px}
+.card h3{font-size:1.08rem;line-height:1.3}
+.card p{color:var(--muted);font-size:.93rem;flex:1}
+.go{color:var(--accent);font-weight:600;font-size:.92rem}
+.card.soon{opacity:.75;border-style:dashed;box-shadow:none}
+.card.soon:hover{transform:none;border-color:var(--border)}
+.tag{display:inline-block;font-size:.72rem;padding:2px 10px;border-radius:999px;background:var(--border);color:var(--muted);width:fit-content}
+.about{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:26px;box-shadow:var(--shadow)}
+.about p+p{margin-top:10px}
+.about p{color:var(--muted)}
+footer{padding:36px 0 48px;text-align:center;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent);font-weight:600}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="globe">🌍</div>
+    <h1>debunk<span>FE</span></h1>
+    <p>Simulasi interaktif dan materi untuk menguji klaim bumi datar menggunakan sains, geometri, dan perhitungan yang bisa Anda coba sendiri.</p>
+    <div class="cta">
+      <a class="btn primary" href="#simulasi">Mulai Simulasi</a>
+      <a class="btn" href="https://github.com/ThinkofScience/debunkFE" target="_blank" rel="noopener">Lihat di GitHub</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="simulasi">
+    <h2>Simulasi</h2>
+    <p class="sub">Semua simulasi berjalan langsung di browser, tanpa instalasi.</p>
+    <div class="grid">
+      <a class="card" href="simulasi_perhitungan_jari_jari_bumi.html">
+        <div class="icon">📏</div>
+        <h3>Perhitungan Jari-jari Bumi</h3>
+        <p>Hitung ukuran Bumi dari bayangan dan sudut matahari, seperti metode Eratosthenes.</p>
+        <span class="go">Buka simulasi →</span>
+      </a>
+      <a class="card" href="simulasi_akurat_revolusi_bumi_hukum_kepler.html">
+        <div class="icon">🪐</div>
+        <h3>Revolusi Bumi &amp; Hukum Kepler</h3>
+        <p>Orbit Bumi mengelilingi Matahari secara akurat menurut Hukum Kepler.</p>
+        <span class="go">Buka simulasi →</span>
+      </a>
+      <a class="card" href="simulasi_3d_fase_bulan.html">
+        <div class="icon">🌙</div>
+        <h3>Simulasi 3D Fase Bulan</h3>
+        <p>Lihat dalam 3D mengapa Bulan tampak berubah bentuk sepanjang bulan.</p>
+        <span class="go">Buka simulasi →</span>
+      </a>
+      <a class="card" href="kalkulator_kiblat_bumi_datar.html">
+        <div class="icon">🕋</div>
+        <h3>Kalkulator Kiblat Bumi Datar</h3>
+        <p>Bandingkan arah kiblat pada model bumi datar dengan bumi bulat.</p>
+        <span class="go">Buka kalkulator →</span>
+      </a>
+    </div>
+  </section>
+
+  <section id="materi">
+    <h2>Materi</h2>
+    <p class="sub">Penjelasan konsep di balik setiap simulasi.</p>
+    <div class="grid">
+      <div class="card soon">
+        <span class="tag">Segera hadir</span>
+        <h3>Materi akan ditambahkan</h3>
+        <p>Artikel dan penjelasan pendukung sedang disiapkan.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="tentang">
+    <div class="about">
+      <h2>Tentang Proyek</h2>
+      <p>debunkFE adalah proyek terbuka yang mengumpulkan simulasi dan materi edukasi untuk menunjukkan bahwa klaim bumi datar dapat diuji dengan data dan perhitungan.</p>
+      <p>Silakan periksa sendiri: ubah parameter, bandingkan hasilnya, dan lihat apakah modelnya cocok dengan pengamatan nyata.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    Dibuat oleh <a href="https://github.com/idhammath" target="_blank" rel="noopener">idhammath</a> ·
+    <a href="https://github.com/idhammath/debunkFE" target="_blank" rel="noopener">Source code</a>
+  </div>
+</footer>
+
+</body>
+</html>
