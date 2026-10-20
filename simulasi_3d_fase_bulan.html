@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi 3D Fase Bulan Interaktif</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #030712;
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .font-space {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        /* Custom Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 999px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+            transition: transform 0.15s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #7dd3fc;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+    </style>
+</head>
+<body class="text-slate-100 antialiased">
+
+    <!-- Main 3D Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Top Header & Instructions -->
+    <div class="fixed top-4 left-4 right-4 md:left-6 md:right-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 pointer-events-none z-10">
+        <div class="glass-panel px-5 py-3.5 rounded-2xl shadow-2xl pointer-events-auto">
+            <div class="flex items-center gap-2.5">
+                <span class="inline-block w-3 h-3 rounded-full bg-sky-400 animate-pulse"></span>
+                <h1 class="font-space text-lg md:text-xl font-bold tracking-tight text-white">Simulasi Orbit & Fase Bulan</h1>
+            </div>
+            <p class="text-xs md:text-sm text-slate-300 mt-1">
+                🖱️ <span class="text-sky-300 font-medium">Klik & Geser Bulan</span> untuk menggerakkan orbit, atau geser ruang kosong untuk memutar kamera.
+            </p>
+        </div>
+
+        <!-- Sun Direction Indicator Badge -->
+        <div class="glass-panel px-4 py-2.5 rounded-xl flex items-center gap-3 pointer-events-auto self-end md:self-auto shadow-lg border-amber-500/30">
+            <div class="w-4 h-4 rounded-full bg-amber-400 shadow-[0_0_12px_#fbbf24]"></div>
+            <div class="text-xs">
+                <div class="font-semibold text-amber-300">Sinar Matahari</div>
+                <div class="text-slate-400">Datang dari arah Kanan (+X)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Picture-in-Picture (PiP): View from Earth -->
+    <div class="fixed top-36 md:top-24 right-4 md:right-6 z-10 flex flex-col items-end pointer-events-auto">
+        <div class="p-3.5 rounded-2xl shadow-2xl w-48 md:w-64 transition-all duration-300 bg-slate-900/95 border border-white/15">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    Pandangan dari Bumi
+                </span>
+                <span id="illumination-badge" class="text-xs font-mono bg-slate-800/90 text-slate-200 px-2 py-0.5 rounded-md border border-slate-700">0%</span>
+            </div>
+
+            <!-- Dedicated Canvas for Earth Camera rendering (Renders on top of card background for 100% clarity) -->
+            <div id="pip-hole" class="w-full aspect-square rounded-xl border border-sky-500/40 bg-black relative overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.9)] flex items-end justify-center p-2">
+                <canvas id="pip-canvas" class="absolute inset-0 w-full h-full block"></canvas>
+                <!-- Subtle telescope crosshair -->
+                <div class="absolute inset-0 pointer-events-none flex items-center justify-center opacity-25 z-10">
+                    <div class="w-full h-px bg-sky-400"></div>
+                    <div class="h-full w-px bg-sky-400 absolute"></div>
+                    <div class="w-4/5 h-4/5 rounded-full border border-sky-400 absolute"></div>
+                </div>
+                <span class="text-[10px] text-slate-200 bg-slate-950/80 px-2 py-0.5 rounded tracking-wide z-10 border border-white/10">Teleskop Pengamat Bumi</span>
+            </div>
+
+            <!-- Phase Details -->
+            <div class="mt-3 text-center">
+                <div id="phase-name" class="font-space font-bold text-base md:text-lg text-white leading-tight">Bulan Baru</div>
+                <div id="phase-name-en" class="text-xs text-sky-400/90 font-medium mb-1">New Moon</div>
+                <p id="phase-desc" class="text-[11px] text-slate-300 leading-relaxed line-clamp-2">
+                    Bulan berada di antara Bumi dan Matahari. Sisi gelap menghadap Bumi.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Control Panel -->
+    <div class="fixed bottom-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-2xl z-10 pointer-events-auto">
+        <div class="glass-panel p-4 md:px-6 md:py-4 rounded-2xl shadow-2xl">
+            <!-- Slider Row -->
+            <div class="flex flex-col gap-2 mb-3">
+                <div class="flex justify-between items-center text-xs text-slate-300">
+                    <span class="font-medium flex items-center gap-1.5">
+                        <span>🌑</span> Posisi Orbit Bulan
+                    </span>
+                    <div class="flex items-center gap-3 font-mono">
+                        <span id="day-display" class="text-sky-300 font-semibold">Hari ke-1.0</span>
+                        <span class="text-slate-600">|</span>
+                        <span id="angle-display" class="text-slate-400">Sudut: 0°</span>
+                    </div>
+                </div>
+                <input id="orbit-slider" type="range" min="0" max="360" step="0.5" value="0" class="w-full" aria-label="Sudut Orbit Bulan">
+                <div class="flex justify-between text-[10px] text-slate-400 px-1">
+                    <span>🌑 Bulan Baru (0°)</span>
+                    <span>🌓 Kuartal 1 (90°)</span>
+                    <span>🌕 Purnama (180°)</span>
+                    <span>🌗 Kuartal 3 (270°)</span>
+                    <span>🌑 (360°)</span>
+                </div>
+            </div>
+
+            <!-- Buttons Row -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+                <div class="flex items-center gap-2">
+                    <button id="btn-auto" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 transition flex items-center gap-1.5 cursor-pointer">
+                        <span id="auto-icon">▶</span> <span id="auto-text">Putar Otomatis</span>
+                    </button>
+                    <button id="btn-view-top" class="px-3 py-2 rounded-xl text-xs font-medium bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700 transition cursor-pointer">
+                        📐 Tampak Atas
+                    </button>
+                    <button id="btn-view-iso" class="px-3 py-2 rounded-xl text-xs font-medium bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700 transition cursor-pointer">
+                        🎥 Kamera 3D
+                    </button>
+                </div>
+
+                <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+                    <input type="checkbox" id="chk-labels" checked class="rounded bg-slate-800 border-slate-600 text-sky-500 focus:ring-0 cursor-pointer">
+                    <span>Garis Bantu & Cahaya</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Drag Tooltip -->
+    <div id="drag-tooltip" class="fixed pointer-events-none z-20 px-2.5 py-1 rounded-lg bg-sky-500 text-slate-950 font-bold text-xs shadow-lg transform -translate-x-1/2 -translate-y-full hidden">
+        Geser untuk memutar Bulan
+    </div>
+
+    <script>
+        // --- State & Configuration ---
+        const ORBIT_RADIUS = 13;
+        const EARTH_RADIUS = 3.2;
+        const MOON_RADIUS = 1.15;
+        const SYNODIC_MONTH = 29.53;
+
+        let moonAngle = 0; // 0 rad = New Moon (aligned toward Sun at +X)
+        let isDraggingMoon = false;
+        let isHoveringMoon = false;
+        let isDraggingCamera = false;
+        let autoRotate = false;
+
+        // Spherical Camera Coordinates
+        let camSpherical = {
+            radius: 32,
+            theta: Math.PI * 0.22, // horizontal angle
+            phi: Math.PI * 0.32    // vertical angle from top
+        };
+        let targetSpherical = { ...camSpherical };
+        let prevPointer = { x: 0, y: 0 };
+
+        // DOM Elements
+        const container = document.getElementById('canvas-container');
+        const pipHole = document.getElementById('pip-hole');
+        const pipCanvas = document.getElementById('pip-canvas');
+        const orbitSlider = document.getElementById('orbit-slider');
+        const angleDisplay = document.getElementById('angle-display');
+        const dayDisplay = document.getElementById('day-display');
+        const phaseNameEl = document.getElementById('phase-name');
+        const phaseNameEnEl = document.getElementById('phase-name-en');
+        const phaseDescEl = document.getElementById('phase-desc');
+        const illuminationBadge = document.getElementById('illumination-badge');
+        const btnAuto = document.getElementById('btn-auto');
+        const autoIcon = document.getElementById('auto-icon');
+        const autoText = document.getElementById('auto-text');
+        const btnViewTop = document.getElementById('btn-view-top');
+        const btnViewIso = document.getElementById('btn-view-iso');
+        const chkLabels = document.getElementById('chk-labels');
+        const dragTooltip = document.getElementById('drag-tooltip');
+
+        // --- Procedural Canvas Textures (No external URLs needed) ---
+        function createEarthTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            // Deep Ocean Gradient
+            const grad = ctx.createLinearGradient(0, 0, 0, 512);
+            grad.addColorStop(0, '#0f2942');
+            grad.addColorStop(0.5, '#0284c7');
+            grad.addColorStop(1, '#0f2942');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 1024, 512);
+
+            // Procedural Continents
+            const continents = [
+                { x: 220, y: 160, r: 75 }, { x: 260, y: 220, r: 55 }, { x: 310, y: 330, r: 65 },
+                { x: 520, y: 150, r: 60 }, { x: 550, y: 260, r: 75 }, { x: 680, y: 160, r: 95 },
+                { x: 760, y: 220, r: 65 }, { x: 830, y: 360, r: 50 }, { x: 140, y: 120, r: 50 }
+            ];
+
+            ctx.fillStyle = '#15803d';
+            continents.forEach(c => {
+                for (let i = 0; i < 18; i++) {
+                    const ang = (i / 18) * Math.PI * 2;
+                    const dist = c.r * (0.4 + Math.sin(i * 3.7) * 0.35 + Math.cos(i * 2.3) * 0.25);
+                    ctx.beginPath();
+                    ctx.arc(c.x + Math.cos(ang) * dist * 0.6, c.y + Math.sin(ang) * dist * 0.5, c.r * 0.45, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            // Highlands / Desert accents
+            ctx.fillStyle = '#ca8a04';
+            ctx.globalAlpha = 0.35;
+            continents.forEach(c => {
+                ctx.beginPath();
+                ctx.arc(c.x + 10, c.y - 5, c.r * 0.35, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Polar Ice Caps
+            ctx.globalAlpha = 0.9;
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, 1024, 36);
+            ctx.fillRect(0, 476, 1024, 36);
+
+            // Subtle Clouds
+            ctx.globalAlpha = 0.22;
+            ctx.fillStyle = '#ffffff';
+            for (let i = 0; i < 65; i++) {
+                const cx = (i * 173) % 1024;
+                const cy = 45 + ((i * 293) % 420);
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, 45 + (i % 40), 12 + (i % 10), (i % 5) * 0.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.ClampToEdgeWrapping;
+            return texture;
+        }
+
+        function createMoonTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            // High-contrast bright Lunar Regolith base so lit side shines clearly
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillRect(0, 0, 1024, 512);
+
+            // Dark Lunar Maria (Seas)
+            const maria = [
+                { x: 420, y: 200, r: 90 }, { x: 520, y: 240, r: 80 },
+                { x: 340, y: 270, r: 65 }, { x: 640, y: 190, r: 55 },
+                { x: 580, y: 310, r: 50 }, { x: 200, y: 220, r: 45 }
+            ];
+            maria.forEach(m => {
+                const grad = ctx.createRadialGradient(m.x, m.y, m.r * 0.1, m.x, m.y, m.r);
+                grad.addColorStop(0, '#94a3b8');
+                grad.addColorStop(1, 'rgba(148, 163, 184, 0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Impact Craters
+            for (let i = 0; i < 220; i++) {
+                const cx = (i * 347) % 1024;
+                const cy = 30 + ((i * 619) % 452);
+                const r = 4 + (i % 24);
+
+                // Crater floor
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.fillStyle = i % 2 === 0 ? '#cbd5e1' : '#bcc6d4';
+                ctx.fill();
+
+                // Crater rim highlight
+                ctx.lineWidth = Math.max(1, r * 0.12);
+                ctx.strokeStyle = '#f8fafc';
+                ctx.stroke();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            return { map: texture, bumpMap: texture };
+        }
+
+        // --- Scene, Renderer & Cameras ---
+        const scene = new THREE.Scene();
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        // Dedicated WebGL Renderer for the Earth Telescope PiP Canvas
+        const pipRenderer = new THREE.WebGLRenderer({ canvas: pipCanvas, antialias: true });
+        pipRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        pipRenderer.setClearColor(0x020617, 1);
+
+        // Main Orbital Camera
+        const mainCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        // Earth View Camera (for Picture-in-Picture phase observation)
+        const earthCamera = new THREE.PerspectiveCamera(11.5, 1, 0.1, 500);
+        // Set Earth Camera to see Layer 0 (Stars & Lights) and Layer 1 (Moon), hiding Layer 2 (Earth & Orbit Lines)
+        earthCamera.layers.enable(0);
+        earthCamera.layers.enable(1);
+        earthCamera.layers.disable(2);
+
+        mainCamera.layers.enableAll();
+
+        // --- Lighting (Sun from +X direction) ---
+        // Very low ambient light so the unlit side of the Moon is dark (Earthshine effect)
+        const ambientLight = new THREE.AmbientLight(0x334155, 0.25);
+        ambientLight.layers.enableAll();
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 3.2);
+        sunLight.position.set(120, 0, 0);
+        sunLight.layers.enableAll();
+        scene.add(sunLight);
+
+        // --- Starfield Background ---
+        function createStars() {
+            const starGeo = new THREE.BufferGeometry();
+            const count = 1800;
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+
+            for (let i = 0; i < count; i++) {
+                const r = 180 + Math.random() * 150;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+
+                positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                positions[i * 3 + 2] = r * Math.cos(phi);
+
+                const tint = 0.8 + Math.random() * 0.2;
+                colors[i * 3] = tint;
+                colors[i * 3 + 1] = tint;
+                colors[i * 3 + 2] = 1.0;
+            }
+
+            starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            starGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const starMat = new THREE.PointsMaterial({
+                size: 0.75,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.85
+            });
+
+            const stars = new THREE.Points(starGeo, starMat);
+            stars.layers.set(0);
+            scene.add(stars);
+        }
+        createStars();
+
+        // --- Fixed Earth at Center (0, 0, 0) ---
+        const earthGroup = new THREE.Group();
+        scene.add(earthGroup);
+
+        const earthGeo = new THREE.SphereGeometry(EARTH_RADIUS, 64, 64);
+        const earthMat = new THREE.MeshStandardMaterial({
+            map: createEarthTexture(),
+            roughness: 0.65,
+            metalness: 0.08
+        });
+        const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+        // Put Earth on Layer 2 so the Earth-centered PiP camera doesn't clip inside Earth's geometry
+        earthMesh.layers.set(2);
+        earthGroup.add(earthMesh);
+
+        // Earth Atmosphere Halo
+        const atmosGeo = new THREE.SphereGeometry(EARTH_RADIUS * 1.05, 64, 64);
+        const atmosMat = new THREE.MeshBasicMaterial({
+            color: 0x38bdf8,
+            transparent: true,
+            opacity: 0.14,
+            side: THREE.BackSide
+        });
+        const atmosMesh = new THREE.Mesh(atmosGeo, atmosMat);
+        atmosMesh.layers.set(2);
+        earthGroup.add(atmosMesh);
+
+        // --- Moon & Interactive Handle ---
+        const moonGroup = new THREE.Group();
+        scene.add(moonGroup);
+
+        const moonTextures = createMoonTexture();
+        const moonGeo = new THREE.SphereGeometry(MOON_RADIUS, 64, 64);
+        const moonMat = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            map: moonTextures.map,
+            bumpMap: moonTextures.bumpMap,
+            bumpScale: 0.025,
+            roughness: 0.75,
+            metalness: 0.0
+        });
+        const moonMesh = new THREE.Mesh(moonGeo, moonMat);
+        moonMesh.layers.set(1); // Visible to both Main Camera and Earth PiP Camera
+        moonGroup.add(moonMesh);
+
+        // Selection Ring around Moon (Visual feedback for dragging)
+        const ringGeo = new THREE.RingGeometry(MOON_RADIUS * 1.35, MOON_RADIUS * 1.52, 48);
+        ringGeo.rotateX(-Math.PI / 2);
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: 0x38bdf8,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.55
+        });
+        const moonHighlightRing = new THREE.Mesh(ringGeo, ringMat);
+        moonHighlightRing.layers.set(2); // Only visible in Main View
+        moonGroup.add(moonHighlightRing);
+
+        // Invisible larger sphere around Moon for easy mouse & touch grabbing
+        const hitSphereGeo = new THREE.SphereGeometry(MOON_RADIUS * 2.6, 16, 16);
+        const hitSphereMat = new THREE.MeshBasicMaterial({ visible: false });
+        const moonHitCollider = new THREE.Mesh(hitSphereGeo, hitSphereMat);
+        moonGroup.add(moonHitCollider);
+
+        // --- Visual Guides Group (Layer 2: Hidden in PiP) ---
+        const guidesGroup = new THREE.Group();
+        guidesGroup.layers.set(2);
+        scene.add(guidesGroup);
+
+        // Orbit Path Circle
+        const orbitPoints = [];
+        for (let i = 0; i <= 128; i++) {
+            const theta = (i / 128) * Math.PI * 2;
+            orbitPoints.push(new THREE.Vector3(Math.cos(theta) * ORBIT_RADIUS, 0, Math.sin(theta) * ORBIT_RADIUS));
+        }
+        const orbitLineGeo = new THREE.BufferGeometry().setFromPoints(orbitPoints);
+        const orbitLineMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.35 });
+        const orbitLine = new THREE.Line(orbitLineGeo, orbitLineMat);
+        orbitLine.layers.set(2);
+        guidesGroup.add(orbitLine);
+
+        // Line connecting Earth to Moon
+        const connectorGeo = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(ORBIT_RADIUS, 0, 0)
+        ]);
+        const connectorMat = new THREE.LineDashedMaterial({
+            color: 0x7dd3fc,
+            dashSize: 0.5,
+            gapSize: 0.35,
+            transparent: true,
+            opacity: 0.6
+        });
+        const earthMoonLine = new THREE.Line(connectorGeo, connectorMat);
+        earthMoonLine.computeLineDistances();
+        earthMoonLine.layers.set(2);
+        guidesGroup.add(earthMoonLine);
+
+        // Sunlight Direction Arrows from Right (+X)
+        const sunArrowsGroup = new THREE.Group();
+        const arrowColor = 0xfbbf24;
+        for (let z = -12; z <= 12; z += 6) {
+            const dir = new THREE.Vector3(-1, 0, 0);
+            const origin = new THREE.Vector3(24, 0, z);
+            const arrow = new THREE.ArrowHelper(dir, origin, 4.5, arrowColor, 0.9, 0.5);
+            arrow.line.material.transparent = true;
+            arrow.line.material.opacity = 0.45;
+            arrow.cone.material.transparent = true;
+            arrow.cone.material.opacity = 0.65;
+            arrow.traverse(child => child.layers.set(2));
+            sunArrowsGroup.add(arrow);
+        }
+        guidesGroup.add(sunArrowsGroup);
+
+        // Distant Visual Sun Sphere on the far right (+X)
+        const sunVisualGeo = new THREE.SphereGeometry(5, 32, 32);
+        const sunVisualMat = new THREE.MeshBasicMaterial({ color: 0xfde047 });
+        const sunVisual = new THREE.Mesh(sunVisualGeo, sunVisualMat);
+        sunVisual.position.set(85, 0, 0);
+        sunVisual.layers.set(2);
+        guidesGroup.add(sunVisual);
+
+        // --- Phase Information Helper ---
+        function getPhaseDetails(deg) {
+            // Normalize 0 - 360
+            const d = ((deg % 360) + 360) % 360;
+
+            if (d < 22.5 || d >= 337.5) {
+                return {
+                    id: 'Bulan Baru (Mati)',
+                    en: 'New Moon',
+                    desc: 'Bulan berada searah dengan Matahari. Sisi yang terkena cahaya membelakangi Bumi sehingga tampak gelap.'
+                };
+            } else if (d < 67.5) {
+                return {
+                    id: 'Sabit Muda (Hilal)',
+                    en: 'Waxing Crescent',
+                    desc: 'Bulan bergerak meninggalkan konjungsi. Sebagian kecil sisi kanan/barat mulai tampak bersinar dari Bumi.'
+                };
+            } else if (d < 112.5) {
+                return {
+                    id: 'Kuartal Pertama (Perbani Awal)',
+                    en: 'First Quarter',
+                    desc: 'Bulan membentuk sudut 90° terhadap Matahari. Setengah bagian permukaan Bulan terlihat terang dari Bumi.'
+                };
+            } else if (d < 157.5) {
+                return {
+                    id: 'Cembung Awal',
+                    en: 'Waxing Gibbous',
+                    desc: 'Lebih dari separuh bagian Bulan tampak disinari Matahari dan terus membesar menuju fase Purnama.'
+                };
+            } else if (d < 202.5) {
+                return {
+                    id: 'Bulan Purnama',
+                    en: 'Full Moon',
+                    desc: 'Bumi berada di antara Matahari dan Bulan (180°). Seluruh permukaan Bulan yang menghadap Bumi tampak terang benderang.'
+                };
+            } else if (d < 247.5) {
+                return {
+                    id: 'Cembung Akhir',
+                    en: 'Waning Gibbous',
+                    desc: 'Setelah melewati Purnama, bagian Bulan yang bersinar perlahan mulai menyusut.'
+                };
+            } else if (d < 292.5) {
+                return {
+                    id: 'Kuartal Ketiga (Perbani Akhir)',
+                    en: 'Third / Last Quarter',
+                    desc: 'Bulan kembali membentuk sudut siku-siku (270°). Separuh sisi lainnya tampak terang dari Bumi.'
+                };
+            } else {
+                return {
+                    id: 'Sabit Tua',
+                    en: 'Waning Crescent',
+                    desc: 'Hanya tersisa sabit tipis sebelum Bulan kembali ke posisi Bulan Baru.'
+                };
+            }
+        }
+
+        // --- Update Moon Position & Phase State ---
+        function updateMoonOrbit(angleRad) {
+            // Normalize angle to [0, 2*PI)
+            const twoPi = Math.PI * 2;
+            moonAngle = ((angleRad % twoPi) + twoPi) % twoPi;
+
+            // Counter-clockwise orbit when viewed from North Pole (+Y):
+            // Angle 0 = +X (between Earth and Sun -> New Moon)
+            // Angle 90° = -Z
+            // Angle 180° = -X (behind Earth -> Full Moon)
+            const mx = Math.cos(moonAngle) * ORBIT_RADIUS;
+            const mz = -Math.sin(moonAngle) * ORBIT_RADIUS;
+
+            moonGroup.position.set(mx, 0, mz);
+
+            // Tidally lock Moon so the same lunar face always points toward Earth
+            moonMesh.lookAt(0, 0, 0);
+
+            // Update Earth-Moon dashed connector line
+            const linePositions = earthMoonLine.geometry.attributes.position.array;
+            linePositions[3] = mx;
+            linePositions[4] = 0;
+            linePositions[5] = mz;
+            earthMoonLine.geometry.attributes.position.needsUpdate = true;
+            earthMoonLine.computeLineDistances();
+
+            // Point Earth Telescope Camera directly at the Moon
+            earthCamera.position.set(0, 0, 0);
+            earthCamera.up.set(0, 1, 0);
+            earthCamera.lookAt(mx, 0, mz);
+
+            // Calculate metrics for UI
+            const deg = (moonAngle * 180) / Math.PI;
+            const illumination = ((1 - Math.cos(moonAngle)) / 2) * 100;
+            const lunarDay = 1 + (deg / 360) * (SYNODIC_MONTH - 1);
+
+            // Sync UI
+            orbitSlider.value = deg.toFixed(1);
+            angleDisplay.textContent = `Sudut: ${Math.round(deg)}°`;
+            dayDisplay.textContent = `Hari ke-${lunarDay.toFixed(1)}`;
+            illuminationBadge.textContent = `${Math.round(illumination)}% Terang`;
+
+            const phaseInfo = getPhaseDetails(deg);
+            phaseNameEl.textContent = phaseInfo.id;
+            phaseNameEnEl.textContent = phaseInfo.en;
+            phaseDescEl.textContent = phaseInfo.desc;
+        }
+
+        // --- Raycasting & Interactive Mouse/Touch Controls ---
+        const raycaster = new THREE.Raycaster();
+        const pointerNDC = new THREE.Vector2();
+        const orbitalPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // Horizontal plane Y=0
+        const planeIntersectPoint = new THREE.Vector3();
+
+        function updatePointerNDC(clientX, clientY) {
+            pointerNDC.x = (clientX / window.innerWidth) * 2 - 1;
+            pointerNDC.y = -(clientY / window.innerHeight) * 2 + 1;
+        }
+
+        function checkMoonIntersection(clientX, clientY) {
+            updatePointerNDC(clientX, clientY);
+            raycaster.setFromCamera(pointerNDC, mainCamera);
+            const hits = raycaster.intersectObject(moonHitCollider, false);
+            return hits.length > 0;
+        }
+
+        function dragMoonToPointer(clientX, clientY) {
+            updatePointerNDC(clientX, clientY);
+            raycaster.setFromCamera(pointerNDC, mainCamera);
+            if (raycaster.ray.intersectPlane(orbitalPlane, planeIntersectPoint)) {
+                // Compute angle around Earth (0,0,0) matching mx = cos(a), mz = -sin(a)
+                const newAngle = Math.atan2(-planeIntersectPoint.z, planeIntersectPoint.x);
+                updateMoonOrbit(newAngle);
+            }
+        }
+
+        // Pointer Down (Mouse & Touch)
+        function onPointerDown(clientX, clientY) {
+            if (checkMoonIntersection(clientX, clientY)) {
+                isDraggingMoon = true;
+                if (autoRotate) toggleAutoRotate(false);
+                document.body.style.cursor = 'grabbing';
+                moonHighlightRing.material.color.setHex(0xfbbf24);
+                moonHighlightRing.material.opacity = 0.95;
+                dragTooltip.classList.add('hidden');
+            } else {
+                isDraggingCamera = true;
+                prevPointer.x = clientX;
+                prevPointer.y = clientY;
+                document.body.style.cursor = 'move';
+            }
+        }
+
+        // Pointer Move
+        function onPointerMove(clientX, clientY) {
+            if (isDraggingMoon) {
+                dragMoonToPointer(clientX, clientY);
+                return;
+            }
+
+            if (isDraggingCamera) {
+                const dx = clientX - prevPointer.x;
+                const dy = clientY - prevPointer.y;
+                prevPointer.x = clientX;
+                prevPointer.y = clientY;
+
+                targetSpherical.theta -= dx * 0.007;
+                targetSpherical.phi = Math.max(0.08, Math.min(Math.PI * 0.48, targetSpherical.phi - dy * 0.007));
+                return;
+            }
+
+            // Hover detection on Moon
+            const hovering = checkMoonIntersection(clientX, clientY);
+            if (hovering !== isHoveringMoon) {
+                isHoveringMoon = hovering;
+                if (isHoveringMoon) {
+                    document.body.style.cursor = 'grab';
+                    moonHighlightRing.material.color.setHex(0x7dd3fc);
+                    moonHighlightRing.material.opacity = 0.9;
+                    moonHighlightRing.scale.set(1.12, 1.12, 1.12);
+                    dragTooltip.classList.remove('hidden');
+                } else {
+                    document.body.style.cursor = 'default';
+                    moonHighlightRing.material.color.setHex(0x38bdf8);
+                    moonHighlightRing.material.opacity = 0.55;
+                    moonHighlightRing.scale.set(1, 1, 1);
+                    dragTooltip.classList.add('hidden');
+                }
+            }
+
+            if (isHoveringMoon) {
+                dragTooltip.style.left = `${clientX}px`;
+                dragTooltip.style.top = `${clientY - 18}px`;
+            }
+        }
+
+        // Pointer Up
+        function onPointerUp() {
+            isDraggingMoon = false;
+            isDraggingCamera = false;
+            document.body.style.cursor = isHoveringMoon ? 'grab' : 'default';
+            moonHighlightRing.material.color.setHex(isHoveringMoon ? 0x7dd3fc : 0x38bdf8);
+            moonHighlightRing.material.opacity = isHoveringMoon ? 0.9 : 0.55;
+        }
+
+        // Mouse Listeners
+        renderer.domElement.addEventListener('mousedown', (e) => {
+            if (e.button === 0) onPointerDown(e.clientX, e.clientY);
+        });
+        window.addEventListener('mousemove', (e) => onPointerMove(e.clientX, e.clientY));
+        window.addEventListener('mouseup', onPointerUp);
+
+        // Touch Listeners
+        renderer.domElement.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                onPointerDown(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) {
+                onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchend', onPointerUp);
+
+        // Mouse Wheel Zoom
+        renderer.domElement.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            targetSpherical.radius = Math.max(18, Math.min(55, targetSpherical.radius + e.deltaY * 0.025));
+        }, { passive: false });
+
+        // --- UI Controls Events ---
+        orbitSlider.addEventListener('input', (e) => {
+            if (autoRotate) toggleAutoRotate(false);
+            const deg = parseFloat(e.target.value);
+            updateMoonOrbit((deg * Math.PI) / 180);
+        });
+
+        function toggleAutoRotate(forceState) {
+            autoRotate = typeof forceState === 'boolean' ? forceState : !autoRotate;
+            if (autoRotate) {
+                autoIcon.textContent = '⏸';
+                autoText.textContent = 'Jeda Orbit';
+                btnAuto.classList.replace('bg-sky-500/20', 'bg-amber-500/25');
+                btnAuto.classList.replace('text-sky-300', 'text-amber-300');
+            } else {
+                autoIcon.textContent = '▶';
+                autoText.textContent = 'Putar Otomatis';
+                btnAuto.classList.replace('bg-amber-500/25', 'bg-sky-500/20');
+                btnAuto.classList.replace('text-amber-300', 'text-sky-300');
+            }
+        }
+
+        btnAuto.addEventListener('click', () => toggleAutoRotate());
+
+        btnViewTop.addEventListener('click', () => {
+            targetSpherical.phi = 0.05;
+            targetSpherical.theta = 0;
+            targetSpherical.radius = 34;
+        });
+
+        btnViewIso.addEventListener('click', () => {
+            targetSpherical.phi = Math.PI * 0.32;
+            targetSpherical.theta = Math.PI * 0.22;
+            targetSpherical.radius = 32;
+        });
+
+        chkLabels.addEventListener('change', (e) => {
+            guidesGroup.visible = e.target.checked;
+        });
+
+        // Window Resize Handler
+        window.addEventListener('resize', () => {
+            mainCamera.aspect = window.innerWidth / window.innerHeight;
+            mainCamera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Slow axial rotation for Earth (Earth's position remains fixed at origin)
+            earthMesh.rotation.y += 0.0015;
+
+            // Optional automatic orbital motion
+            if (autoRotate && !isDraggingMoon) {
+                updateMoonOrbit(moonAngle + 0.005);
+            }
+
+            // Smooth camera damping
+            camSpherical.radius += (targetSpherical.radius - camSpherical.radius) * 0.1;
+            camSpherical.theta += (targetSpherical.theta - camSpherical.theta) * 0.1;
+            camSpherical.phi += (targetSpherical.phi - camSpherical.phi) * 0.1;
+
+            mainCamera.position.x = camSpherical.radius * Math.sin(camSpherical.phi) * Math.sin(camSpherical.theta);
+            mainCamera.position.y = camSpherical.radius * Math.cos(camSpherical.phi);
+            mainCamera.position.z = camSpherical.radius * Math.sin(camSpherical.phi) * Math.cos(camSpherical.theta);
+            mainCamera.lookAt(0, 0, 0);
+
+            // 1. Render Main 3D Orbital View (Full Screen)
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            renderer.render(scene, mainCamera);
+
+            // 2. Render Picture-in-Picture (Earth Telescope View) directly onto #pip-canvas
+            const rect = pipHole.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+                const pipWidth = Math.floor(rect.width);
+                const pipHeight = Math.floor(rect.height);
+
+                if (pipCanvas.width !== pipWidth * pipRenderer.getPixelRatio() || pipCanvas.height !== pipHeight * pipRenderer.getPixelRatio()) {
+                    pipRenderer.setSize(pipWidth, pipHeight, false);
+                    earthCamera.aspect = pipWidth / pipHeight;
+                    earthCamera.updateProjectionMatrix();
+                }
+
+                pipRenderer.render(scene, earthCamera);
+            }
+        }
+
+        // Start simulation on window load
+        window.onload = function () {
+            // Initialize at First Quarter / Waxing Crescent (45 degrees) so users see both lit & unlit parts immediately
+            updateMoonOrbit(Math.PI * 0.25);
+            animate();
+        };
+    </script>
+</body>
+</html>
