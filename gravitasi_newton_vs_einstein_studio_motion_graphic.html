@@ -1,0 +1,3232 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gravitasi: Newton vs Einstein — Studio Motion Graphic</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter, Space Grotesk, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Space Grotesk', 'Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            space: {
+              950: '#040712',
+              900: '#070c1c',
+              800: '#0f172a',
+              700: '#1e293b',
+            },
+            newton: '#22d3ee',
+            einstein: '#fbbf24',
+            coral: '#fb7185',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background-color: #040712;
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Custom sleek range slider */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.22);
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 999px;
+      background: #f8fafc;
+      border: 2px solid #22d3ee;
+      margin-top: -5px;
+      box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+      transition: transform 0.12s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.18);
+    }
+    input[type="range"].slider-gold::-webkit-slider-thumb {
+      border-color: #fbbf24;
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+    }
+
+    /* Canvas stage wrapper ensures 16:9, 3:4, and 9:16 fit comfortably inside viewport */
+    #canvasStageWrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+    #motionCanvas {
+      max-width: 100%;
+      max-height: 58vh;
+      width: auto;
+      height: auto;
+      border-radius: 14px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(148, 163, 184, 0.16);
+      background: #050814;
+      display: block;
+    }
+    @media (min-width: 1024px) {
+      #motionCanvas {
+        max-height: 62vh;
+      }
+    }
+
+    @keyframes recPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.85); }
+    }
+    .rec-dot {
+      animation: recPulse 1s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[radial-gradient(ellipse_at_top,_rgba(34,211,238,0.08),_transparent_50%),radial-gradient(ellipse_at_bottom_right,_rgba(251,191,36,0.06),_transparent_50%)]">
+
+  <!-- Header Bar -->
+  <header class="w-full border-b border-slate-800/80 bg-space-900/80 backdrop-blur-md sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400/20 to-amber-400/20 border border-cyan-400/30 flex items-center justify-center shadow-inner">
+          <svg class="w-5 h-5 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3" fill="#fbbf24" stroke="none"></circle>
+            <ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(-24 12 12)"></ellipse>
+            <ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(24 12 12)" stroke="#fbbf24"></ellipse>
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-display font-bold text-sm sm:text-base tracking-tight text-white flex items-center gap-2">
+            Gravitasi: Newton vs Einstein
+            <span class="hidden sm:inline-flex text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-cyan-300 border border-slate-700">01:32.3</span>
+          </h1>
+          <p class="text-[11px] sm:text-xs text-slate-400">Studio Motion Graphic HTML5 Canvas &bull; Ekspor MP4</p>
+        </div>
+      </div>
+
+      <!-- Live Recording Badge + Status Pill -->
+      <div class="flex items-center gap-2.5">
+        <div id="recBadge" class="hidden items-center gap-2 px-3 py-1.5 rounded-full bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-mono font-semibold">
+          <span class="w-2.5 h-2.5 rounded-full bg-rose-500 rec-dot"></span>
+          <span id="recBadgeText">REC 00:00 / 01:32</span>
+        </div>
+        <div id="resPill" class="px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/70 text-[11px] font-mono text-slate-300">
+          16:9 &bull; 1280&times;720
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-4 flex flex-col gap-4">
+
+    <!-- Status Notification Banner (Replaces alert/confirm) -->
+    <div id="statusBanner" class="hidden items-center justify-between gap-3 px-4 py-2.5 rounded-xl border text-xs sm:text-sm transition-all">
+      <div class="flex items-center gap-2.5">
+        <span id="statusIcon" class="text-base">✨</span>
+        <span id="statusMessage" class="font-medium"></span>
+      </div>
+      <button id="dismissStatusBtn" class="text-slate-400 hover:text-white px-2 py-0.5 rounded-lg hover:bg-white/10 text-xs">Tutup</button>
+    </div>
+
+    <!-- Canvas Preview Stage -->
+    <section class="relative w-full rounded-2xl bg-space-900/60 border border-slate-800/90 p-3 sm:p-4 flex flex-col items-center justify-center shadow-2xl">
+      <div id="canvasStageWrapper">
+        <canvas id="motionCanvas" width="1280" height="720"></canvas>
+      </div>
+
+      <!-- Recording Progress Overlay Bar -->
+      <div id="recProgressWrap" class="hidden w-full max-w-2xl mt-3">
+        <div class="flex items-center justify-between text-xs font-mono text-rose-300 mb-1">
+          <span>Merekam kanvas + narasi + SFX secara real-time...</span>
+          <span id="recPercent">0%</span>
+        </div>
+        <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+          <div id="recProgressBar" class="h-full bg-gradient-to-r from-rose-500 via-amber-400 to-cyan-400 transition-all duration-150" style="width: 0%"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Transport & Timeline Scrubber Dock -->
+    <section class="w-full rounded-2xl bg-space-900/85 border border-slate-800/90 p-4 backdrop-blur-md shadow-xl flex flex-col gap-3">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <!-- Play / Restart Controls -->
+        <div class="flex items-center gap-2">
+          <button id="playPauseBtn" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-cyan-500/20 transition active:scale-95">
+            <svg id="playIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="pauseIcon" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+            <span id="playPauseLabel">Putar</span>
+          </button>
+
+          <button id="restartBtn" title="Mulai dari 00:00" class="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-xs sm:text-sm font-medium transition active:scale-95">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+            <span class="hidden sm:inline">Ulangi</span>
+          </button>
+        </div>
+
+        <!-- Live Timecode & Active Scene Label -->
+        <div class="flex items-center gap-3">
+          <span id="activeSceneLabel" class="hidden md:inline-flex px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/25 text-cyan-300 text-xs font-medium">
+            Adegan 1: Apel Newton &amp; Kejutan Einstein
+          </span>
+          <div class="font-mono text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl bg-slate-950/90 border border-slate-800 text-slate-100">
+            <span id="currentTimeLabel" class="text-cyan-300">00:00.0</span>
+            <span class="text-slate-500 mx-1">/</span>
+            <span class="text-slate-400">01:32.3</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Timeline Scrubber -->
+      <div class="relative pt-1">
+        <input id="timelineScrubber" type="range" min="0" max="92.3" step="0.05" value="0" class="w-full" aria-label="Timeline Scrubber" />
+        <!-- Clickable Scene Chapter Markers -->
+        <div id="chapterButtons" class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-2.5">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Studio Controls Grid: Visual Settings | Audio Mixer | Export MP4 -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4 pb-6">
+
+      <!-- 1. Visual & Brand Settings -->
+      <div class="lg:col-span-4 rounded-2xl bg-space-900/85 border border-slate-800/90 p-4 flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Tampilan &amp; Identitas</h2>
+          <span class="text-[11px] text-slate-500">Real-time Canvas</span>
+        </div>
+
+        <!-- Aspect Ratio Selector -->
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-2">Aspek Rasio</label>
+          <div class="grid grid-cols-3 gap-2" id="aspectRatioGroup">
+            <button data-ratio="16:9" class="ratio-btn flex flex-col items-center justify-center py-2 px-2 rounded-xl border text-xs font-semibold transition bg-cyan-500/15 border-cyan-400 text-cyan-200">
+              <span>16:9</span>
+              <span class="text-[10px] font-normal opacity-75">Landscape</span>
+            </button>
+            <button data-ratio="3:4" class="ratio-btn flex flex-col items-center justify-center py-2 px-2 rounded-xl border text-xs font-semibold transition bg-slate-800/70 border-slate-700 text-slate-300 hover:bg-slate-800">
+              <span>3:4</span>
+              <span class="text-[10px] font-normal opacity-75">Portrait</span>
+            </button>
+            <button data-ratio="9:16" class="ratio-btn flex flex-col items-center justify-center py-2 px-2 rounded-xl border text-xs font-semibold transition bg-slate-800/70 border-slate-700 text-slate-300 hover:bg-slate-800">
+              <span>9:16</span>
+              <span class="text-[10px] font-normal opacity-75">Reels/TikTok</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Account Handle Selector -->
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-2">Nama Akun (Watermark)</label>
+          <div class="grid grid-cols-3 gap-1.5" id="accountGroup">
+            <button data-account="@Idhamdaz" class="account-btn py-2 px-1.5 rounded-xl border text-[11px] sm:text-xs font-semibold transition bg-amber-500/15 border-amber-400 text-amber-200 truncate">
+              @Idhamdaz
+            </button>
+            <button data-account="@KulikMath" class="account-btn py-2 px-1.5 rounded-xl border text-[11px] sm:text-xs font-semibold transition bg-slate-800/70 border-slate-700 text-slate-300 hover:bg-slate-800 truncate">
+              @KulikMath
+            </button>
+            <button data-account="@ThinkOfScience" class="account-btn py-2 px-1.5 rounded-xl border text-[11px] sm:text-xs font-semibold transition bg-slate-800/70 border-slate-700 text-slate-300 hover:bg-slate-800 truncate">
+              @ThinkOfScience
+            </button>
+          </div>
+        </div>
+
+        <!-- Visibility Toggles -->
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <label class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-700/70 cursor-pointer select-none">
+            <span class="text-xs text-slate-200 font-medium">Subtitle</span>
+            <input id="toggleSubtitles" type="checkbox" checked class="w-4 h-4 accent-cyan-400 rounded" />
+          </label>
+          <label class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-700/70 cursor-pointer select-none">
+            <span class="text-xs text-slate-200 font-medium">Watermark</span>
+            <input id="toggleWatermark" type="checkbox" checked class="w-4 h-4 accent-amber-400 rounded" />
+          </label>
+        </div>
+      </div>
+
+      <!-- 2. Audio Engine: Voice Over Upload & Dual Volume Mixer -->
+      <div class="lg:col-span-4 rounded-2xl bg-space-900/85 border border-slate-800/90 p-4 flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Audio Narasi &amp; SFX</h2>
+          <span class="text-[11px] text-cyan-400/90 font-mono">Web Audio Sync</span>
+        </div>
+
+        <!-- Voice Over Upload Button -->
+        <div class="flex flex-col gap-1.5">
+          <label for="voFileInput" class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-dashed border-cyan-400/50 text-cyan-200 text-xs sm:text-sm font-semibold cursor-pointer transition active:scale-[0.99]">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span>Unggah Voice Over (MP3/WAV/M4A)</span>
+          </label>
+          <input id="voFileInput" type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg" class="hidden" />
+          <div id="voStatusText" class="text-[11px] text-slate-400 flex items-center justify-between px-1">
+            <span>Belum ada file VO (animasi &amp; SFX tetap aktif)</span>
+            <button id="clearVoBtn" class="hidden text-rose-400 hover:text-rose-300 underline ml-2">Hapus</button>
+          </div>
+        </div>
+
+        <!-- Mixer 1: Volume Narasi -->
+        <div class="flex flex-col gap-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <button id="muteNarasiBtn" class="flex items-center gap-1.5 text-slate-200 hover:text-cyan-300 font-medium transition">
+              <span id="muteNarasiIcon">🎙️</span>
+              <span>Volume Narasi (VO)</span>
+            </button>
+            <span id="narasiVolVal" class="font-mono text-cyan-300 font-semibold">100%</span>
+          </div>
+          <input id="narasiVolumeSlider" type="range" min="0" max="100" value="100" class="w-full" />
+        </div>
+
+        <!-- Mixer 2: Volume Sound Effect -->
+        <div class="flex flex-col gap-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <button id="muteSfxBtn" class="flex items-center gap-1.5 text-slate-200 hover:text-amber-300 font-medium transition">
+              <span id="muteSfxIcon">🔊</span>
+              <span>Volume Sound Effect (SFX)</span>
+            </button>
+            <span id="sfxVolVal" class="font-mono text-amber-300 font-semibold">75%</span>
+          </div>
+          <input id="sfxVolumeSlider" type="range" min="0" max="100" value="75" class="w-full slider-gold" />
+        </div>
+      </div>
+
+      <!-- 3. Record & Export MP4 Panel -->
+      <div class="lg:col-span-4 rounded-2xl bg-space-900/85 border border-slate-800/90 p-4 flex flex-col justify-between gap-4">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Rekam &amp; Ekspor Video</h2>
+            <span id="codecPill" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Siap MP4</span>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Merekam langsung dari kanvas 30 FPS beserta campuran audio <span class="text-cyan-300">Narasi</span> dan <span class="text-amber-300">SFX</span> sesuai pengaturan volume Anda dari <span class="font-mono text-slate-200">00:00</span> hingga <span class="font-mono text-slate-200">01:32.3</span> secara otomatis.
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <button id="recordExportBtn" class="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl bg-gradient-to-r from-rose-500 via-amber-500 to-amber-400 hover:from-rose-400 hover:to-amber-300 text-slate-950 font-extrabold text-sm shadow-lg shadow-rose-500/20 transition active:scale-[0.98]">
+            <span class="w-3 h-3 rounded-full bg-slate-950"></span>
+            <span>Rekam &amp; Ekspor MP4</span>
+          </button>
+
+          <button id="stopSaveNowBtn" class="hidden w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm shadow-lg transition active:scale-[0.98]">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+            <span>Stop &amp; Simpan Sekarang</span>
+          </button>
+
+          <div class="text-[11px] text-slate-500 text-center">
+            Pintasan: Tekan <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">Spasi</kbd> untuk Putar / Jeda
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      // =========================================================================
+      // 1. CONSTANTS, SCRIPT TIMELINE & CONFIGURATION
+      // =========================================================================
+      const TOTAL_DURATION = 92.3;
+
+      const ASPECT_CONFIGS = {
+        '16:9': { width: 1280, height: 720, label: '16:9 • 1280×720' },
+        '3:4':  { width: 960,  height: 1280, label: '3:4 • 960×1280' },
+        '9:16': { width: 720,  height: 1280, label: '9:16 • 720×1280' },
+      };
+
+      const SCENES = [
+        { id: 1, start: 0.0,  end: 12.6, short: '1. Hook',      title: 'Adegan 1: Apel Newton & Kejutan Einstein', accent: '#22d3ee' },
+        { id: 2, start: 12.6, end: 31.4, short: '2. Newton',    title: 'Adegan 2: Hukum Gravitasi Newton (1687)',  accent: '#22d3ee' },
+        { id: 3, start: 31.4, end: 42.8, short: '3. Paradoks',  title: 'Adegan 3: Paradoks Ruang Hampa & Merkurius', accent: '#fb7185' },
+        { id: 4, start: 42.8, end: 64.9, short: '4. Einstein',  title: 'Adegan 4: Relativitas Umum Einstein (1915)', accent: '#fbbf24' },
+        { id: 5, start: 64.9, end: 83.5, short: '5. GPS & Bulan', title: 'Adegan 5: Mana Yang Benar? GPS & Misi Bulan', accent: '#fbbf24' },
+        { id: 6, start: 83.5, end: 92.3, short: '6. Penutup',   title: 'Adegan 6: Sintesis Newton & Einstein',     accent: '#f8fafc' },
+      ];
+
+      // Exact Indonesian Voiceover Subtitles synchronized to 92.3s
+      const SUBTITLES = [
+        // Scene 1 (0.0 - 12.6)
+        { start: 0.0,  end: 3.8,  text: 'Pernah dengar cerita apel yang jatuh ke kepala Newton?' },
+        { start: 3.8,  end: 8.8,  text: 'Selama lebih dari dua ratus tahun, kita percaya gravitasi adalah gaya tarik-menarik.' },
+        { start: 8.8,  end: 12.6, text: 'Tapi lalu datang Einstein—dan mengubah segalanya.' },
+        // Scene 2 (12.6 - 31.4)
+        { start: 12.6, end: 17.6, text: 'Menurut Isaac Newton di tahun 1687, setiap benda bermassa saling menarik lewat gaya tak kasatmata.' },
+        { start: 17.6, end: 21.2, text: 'Semakin besar massanya, semakin kuat tarikannya.' },
+        { start: 21.2, end: 24.5, text: 'Semakin jauh jaraknya, semakin lemah.' },
+        { start: 24.5, end: 31.4, text: 'Dengan satu rumus sederhana ini, Newton berhasil menjelaskan jatuhnya apel sekaligus orbit Bulan.' },
+        // Scene 3 (31.4 - 42.8)
+        { start: 31.4, end: 37.2, text: 'Masalahnya, Newton sendiri bingung: bagaimana Matahari bisa menarik Bumi secara instan melewati ruang hampa?' },
+        { start: 37.2, end: 42.8, text: 'Ditambah lagi, orbit Merkurius ternyata sedikit meleset dari perhitungan Newton.' },
+        // Scene 4 (42.8 - 64.9)
+        { start: 42.8, end: 47.5, text: 'Tahun 1915, Albert Einstein menawarkan jawaban yang jauh lebih gila.' },
+        { start: 47.5, end: 52.2, text: "Gravitasi bukanlah 'tali' yang menarik, melainkan kelengkungan ruang-waktu itu sendiri." },
+        { start: 52.2, end: 55.8, text: 'Bayangkan kain elastis yang ditekan bola berat.' },
+        { start: 55.8, end: 60.2, text: 'Planet tidak sedang ditarik Matahari—mereka hanya bergerak lurus di atas ruang yang melengkung.' },
+        { start: 60.2, end: 64.9, text: 'Bahkan cahaya pun ikut berbelok mengikuti lengkungan ini.' },
+        // Scene 5 (64.9 - 83.5)
+        { start: 64.9, end: 69.5, text: 'Jadi, mana yang benar? Secara fundamental, Einstein yang benar.' },
+        { start: 69.5, end: 74.5, text: 'Tanpa teorinya, GPS di ponselmu akan meleset belasan kilometer setiap hari.' },
+        { start: 74.5, end: 83.5, text: 'Namun, Newton tidak salah—rumusnya adalah pendekatan super akurat untuk skala sehari-hari, bahkan cukup untuk mengirim astronot ke Bulan.' },
+        // Scene 6 (83.5 - 92.3)
+        { start: 83.5, end: 87.8, text: 'Singkatnya: Newton memberi kita alat hitung paling praktis,' },
+        { start: 87.8, end: 92.3, text: 'sementara Einstein membuka cara alam semesta bekerja sesungguhnya.' },
+      ];
+
+      // Synchronized Procedural SFX Cue List
+      const SFX_CUES = [
+        { id: 'ambient_start', t: 0.5,  fn: 'playSpaceSwell' },
+        { id: 'apple_whistle', t: 0.9,  fn: 'playAppleFall' },
+        { id: 'apple_thud',    t: 2.2,  fn: 'playSoftThud' },
+        { id: 'einstein_wave', t: 9.2,  fn: 'playGoldenWhoosh' },
+        { id: 'newton_chime',  t: 12.6, fn: 'playMechanicalChime' },
+        { id: 'mass_swell',    t: 17.5, fn: 'playHarmonicSwellUp' },
+        { id: 'dist_swell',    t: 21.2, fn: 'playHarmonicSwellDown' },
+        { id: 'formula_lock',  t: 25.5, fn: 'playDigitalLock' },
+        { id: 'vacuum_sonar',  t: 31.4, fn: 'playSonarAnomaly' },
+        { id: 'mercury_ping',  t: 37.2, fn: 'playTelemetryGlitch' },
+        { id: 'rope_snap',     t: 42.8, fn: 'playTensionSnap' },
+        { id: 'sun_drop',      t: 48.0, fn: 'playCinematicBassDrop' },
+        { id: 'light_bend',    t: 59.5, fn: 'playCrystallineShimmer' },
+        { id: 'verdict_hit',   t: 64.9, fn: 'playVerdictImpact' },
+        { id: 'gps_pings',     t: 70.5, fn: 'playSatellitePings' },
+        { id: 'rocket_whoosh', t: 76.5, fn: 'playThrusterWhoosh' },
+        { id: 'finale_chord',  t: 83.5, fn: 'playFinaleChord' },
+      ];
+
+      // =========================================================================
+      // 2. APPLICATION STATE & DOM REFERENCES
+      // =========================================================================
+      const state = {
+        ratio: '16:9',
+        account: '@Idhamdaz',
+        showSubtitles: true,
+        showWatermark: true,
+        currentTime: 0,
+        isPlaying: false,
+        isRecording: false,
+        lastFrameTs: 0,
+        narasiVolume: 1.0,
+        narasiMuted: false,
+        sfxVolume: 0.75,
+        sfxMuted: false,
+        triggeredCues: new Set(),
+      };
+
+      const canvas = document.getElementById('motionCanvas');
+      const ctx = canvas.getContext('2d');
+
+      const ui = {
+        playPauseBtn: document.getElementById('playPauseBtn'),
+        playPauseLabel: document.getElementById('playPauseLabel'),
+        playIcon: document.getElementById('playIcon'),
+        pauseIcon: document.getElementById('pauseIcon'),
+        restartBtn: document.getElementById('restartBtn'),
+        scrubber: document.getElementById('timelineScrubber'),
+        currentTimeLabel: document.getElementById('currentTimeLabel'),
+        activeSceneLabel: document.getElementById('activeSceneLabel'),
+        chapterButtons: document.getElementById('chapterButtons'),
+        resPill: document.getElementById('resPill'),
+        toggleSubtitles: document.getElementById('toggleSubtitles'),
+        toggleWatermark: document.getElementById('toggleWatermark'),
+        voFileInput: document.getElementById('voFileInput'),
+        voStatusText: document.getElementById('voStatusText'),
+        clearVoBtn: document.getElementById('clearVoBtn'),
+        narasiVolumeSlider: document.getElementById('narasiVolumeSlider'),
+        sfxVolumeSlider: document.getElementById('sfxVolumeSlider'),
+        narasiVolVal: document.getElementById('narasiVolVal'),
+        sfxVolVal: document.getElementById('sfxVolVal'),
+        muteNarasiBtn: document.getElementById('muteNarasiBtn'),
+        muteNarasiIcon: document.getElementById('muteNarasiIcon'),
+        muteSfxBtn: document.getElementById('muteSfxBtn'),
+        muteSfxIcon: document.getElementById('muteSfxIcon'),
+        recordExportBtn: document.getElementById('recordExportBtn'),
+        stopSaveNowBtn: document.getElementById('stopSaveNowBtn'),
+        recBadge: document.getElementById('recBadge'),
+        recBadgeText: document.getElementById('recBadgeText'),
+        recProgressWrap: document.getElementById('recProgressWrap'),
+        recProgressBar: document.getElementById('recProgressBar'),
+        recPercent: document.getElementById('recPercent'),
+        codecPill: document.getElementById('codecPill'),
+        statusBanner: document.getElementById('statusBanner'),
+        statusIcon: document.getElementById('statusIcon'),
+        statusMessage: document.getElementById('statusMessage'),
+        dismissStatusBtn: document.getElementById('dismissStatusBtn'),
+      };
+
+      // Deterministic cosmic starfield
+      const STARS = Array.from({ length: 170 }, (_, i) => {
+        const s1 = Math.sin(i * 12.9898) * 43758.5453;
+        const s2 = Math.sin(i * 78.233) * 24634.6345;
+        const s3 = Math.sin(i * 45.164) * 19532.1234;
+        return {
+          x: s1 - Math.floor(s1),
+          y: s2 - Math.floor(s2),
+          size: 0.6 + (s3 - Math.floor(s3)) * 1.9,
+          speed: 0.4 + (i % 7) * 0.25,
+          phase: i * 1.37,
+          tint: i % 9 === 0 ? '#bae6fd' : i % 11 === 0 ? '#fde68a' : '#f8fafc',
+        };
+      });
+
+      // =========================================================================
+      // 3. MATH & EASING UTILITIES
+      // =========================================================================
+      const clamp = (v, min = 0, max = 1) => Math.max(min, Math.min(max, v));
+      const lerp = (a, b, t) => a + (b - a) * t;
+      const invLerp = (a, b, v) => clamp((v - a) / (b - a), 0, 1);
+      const easeOutCubic = (t) => 1 - Math.pow(1 - clamp(t), 3);
+      const easeInOutCubic = (t) => {
+        const x = clamp(t);
+        return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+      };
+      const easeOutBack = (t) => {
+        const x = clamp(t);
+        const c1 = 1.70158;
+        const c3 = c1 + 1;
+        return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+      };
+      const easeOutQuint = (t) => 1 - Math.pow(1 - clamp(t), 5);
+      const formatTime = (sec) => {
+        const s = Math.max(0, sec);
+        const m = Math.floor(s / 60);
+        const rem = s % 60;
+        const whole = Math.floor(rem);
+        const tenths = Math.floor((rem - whole) * 10);
+        return `${String(m).padStart(2, '0')}:${String(whole).padStart(2, '0')}.${tenths}`;
+      };
+      const formatMMSS = (sec) => {
+        const s = Math.max(0, Math.floor(sec));
+        return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+      };
+
+      function showStatus(msg, type = 'info') {
+        const styles = {
+          info: 'bg-cyan-500/10 border-cyan-500/35 text-cyan-200',
+          success: 'bg-emerald-500/10 border-emerald-500/35 text-emerald-200',
+          warn: 'bg-amber-500/10 border-amber-500/35 text-amber-200',
+          error: 'bg-rose-500/10 border-rose-500/35 text-rose-200',
+        };
+        const icons = { info: '✨', success: '✅', warn: '⚠️', error: '❌' };
+        ui.statusBanner.className = `flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border text-xs sm:text-sm transition-all ${styles[type] || styles.info}`;
+        ui.statusIcon.textContent = icons[type] || '✨';
+        ui.statusMessage.textContent = msg;
+      }
+
+      // =========================================================================
+      // 4. WEB AUDIO API ENGINE (VOICEOVER + PROCEDURAL SFX + RECORDING BUS)
+      // =========================================================================
+      const audioEngine = {
+        ctx: null,
+        narasiGain: null,
+        sfxGain: null,
+        streamDest: null,
+        keepAliveOsc: null,
+        voBuffer: null,
+        voSource: null,
+        voFileName: '',
+
+        init() {
+          if (this.ctx) {
+            if (this.ctx.state === 'suspended') this.ctx.resume();
+            return;
+          }
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioCtx();
+
+          // Separate Gain Nodes for Narasi (VO) & SFX
+          this.narasiGain = this.ctx.createGain();
+          this.sfxGain = this.ctx.createGain();
+
+          // Stream destination for MediaRecorder video export
+          this.streamDest = this.ctx.createMediaStreamDestination();
+
+          // Connect both gains to speakers AND recorder bus
+          this.narasiGain.connect(this.ctx.destination);
+          this.narasiGain.connect(this.streamDest);
+
+          this.sfxGain.connect(this.ctx.destination);
+          this.sfxGain.connect(this.streamDest);
+
+          // Ultra-quiet silent keep-alive signal so MediaRecorder always gets continuous audio frames
+          const silentGain = this.ctx.createGain();
+          silentGain.gain.value = 0.00001;
+          this.keepAliveOsc = this.ctx.createOscillator();
+          this.keepAliveOsc.frequency.value = 40;
+          this.keepAliveOsc.connect(silentGain);
+          silentGain.connect(this.streamDest);
+          this.keepAliveOsc.start();
+
+          this.updateVolumes();
+        },
+
+        updateVolumes() {
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          const nVol = state.narasiMuted ? 0 : state.narasiVolume;
+          const sVol = state.sfxMuted ? 0 : state.sfxVolume;
+          this.narasiGain.gain.setTargetAtTime(nVol, now, 0.02);
+          this.sfxGain.gain.setTargetAtTime(sVol, now, 0.02);
+        },
+
+        async loadVoiceOver(file) {
+          try {
+            this.init();
+            const arrayBuffer = await file.arrayBuffer();
+            const decoded = await this.ctx.decodeAudioData(arrayBuffer);
+            this.voBuffer = decoded;
+            this.voFileName = file.name;
+            ui.voStatusText.firstElementChild.textContent = `✓ ${file.name} (${formatTime(decoded.duration)})`;
+            ui.voStatusText.firstElementChild.className = 'text-emerald-300 font-medium truncate max-w-[230px]';
+            ui.clearVoBtn.classList.remove('hidden');
+
+            // If currently playing, immediately sync VO to current timeline position
+            if (state.isPlaying) {
+              this.startVOAt(state.currentTime);
+            }
+            showStatus(`Voice over "${file.name}" (${formatTime(decoded.duration)}) berhasil dimuat dan disinkronkan!`, 'success');
+          } catch (err) {
+            console.error(err);
+            showStatus('Gagal membaca file audio. Pastikan format MP3, WAV, atau M4A valid.', 'error');
+          }
+        },
+
+        clearVoiceOver() {
+          this.stopVO();
+          this.voBuffer = null;
+          this.voFileName = '';
+          ui.voFileInput.value = '';
+          ui.voStatusText.firstElementChild.textContent = 'Belum ada file VO (animasi & SFX tetap aktif)';
+          ui.voStatusText.firstElementChild.className = 'text-slate-400';
+          ui.clearVoBtn.classList.add('hidden');
+        },
+
+        startVOAt(offsetSec) {
+          this.stopVO();
+          if (!this.voBuffer || !this.ctx) return;
+          if (offsetSec >= this.voBuffer.duration) return;
+          const src = this.ctx.createBufferSource();
+          src.buffer = this.voBuffer;
+          src.connect(this.narasiGain);
+          src.start(0, Math.max(0, offsetSec));
+          this.voSource = src;
+        },
+
+        stopVO() {
+          if (this.voSource) {
+            try { this.voSource.stop(); } catch (_) {}
+            try { this.voSource.disconnect(); } catch (_) {}
+            this.voSource = null;
+          }
+        },
+
+        // --- Procedural SFX Synthesizer Library (All routed to sfxGain) ---
+        createNoiseBuffer(duration = 1.5) {
+          const sampleRate = this.ctx.sampleRate;
+          const len = Math.floor(sampleRate * duration);
+          const buf = this.ctx.createBuffer(1, len, sampleRate);
+          const data = buf.getChannelData(0);
+          for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+          return buf;
+        },
+
+        playCue(fnName) {
+          if (!this.ctx || !this[fnName]) return;
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+          try {
+            this[fnName]();
+          } catch (e) {
+            console.warn('SFX error:', e);
+          }
+        },
+
+        // 0.5s: Subtle space ambient swell
+        playSpaceSwell() {
+          const now = this.ctx.currentTime;
+          [110, 164.81, 220].forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            const filter = this.ctx.createBiquadFilter();
+            osc.type = idx === 0 ? 'sine' : 'triangle';
+            osc.frequency.setValueAtTime(freq, now);
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(220, now);
+            filter.frequency.exponentialRampToValueAtTime(700, now + 1.4);
+            filter.frequency.exponentialRampToValueAtTime(200, now + 3.2);
+            g.gain.setValueAtTime(0.0001, now);
+            g.gain.linearRampToValueAtTime(0.055 / (idx + 1), now + 1.0);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + 3.2);
+            osc.connect(filter).connect(g).connect(this.sfxGain);
+            osc.start(now);
+            osc.stop(now + 3.3);
+          });
+        },
+
+        // 0.9s: Apple fall subtle descending whistle
+        playAppleFall() {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(680, now);
+          osc.frequency.exponentialRampToValueAtTime(210, now + 1.25);
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(0.05, now + 0.25);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 1.28);
+          osc.connect(g).connect(this.sfxGain);
+          osc.start(now);
+          osc.stop(now + 1.3);
+        },
+
+        // 2.2s: Soft landing thud
+        playSoftThud() {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(145, now);
+          osc.frequency.exponentialRampToValueAtTime(42, now + 0.22);
+          g.gain.setValueAtTime(0.24, now);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+          osc.connect(g).connect(this.sfxGain);
+          osc.start(now);
+          osc.stop(now + 0.3);
+        },
+
+        // 9.2s: Dramatic golden spacetime transition whoosh/shimmer
+        playGoldenWhoosh() {
+          const now = this.ctx.currentTime;
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = this.createNoiseBuffer(2.0);
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.Q.value = 2.4;
+          filter.frequency.setValueAtTime(180, now);
+          filter.frequency.exponentialRampToValueAtTime(2400, now + 0.9);
+          filter.frequency.exponentialRampToValueAtTime(320, now + 1.8);
+          const g = this.ctx.createGain();
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(0.16, now + 0.75);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 1.85);
+          noise.connect(filter).connect(g).connect(this.sfxGain);
+          noise.start(now);
+
+          // Golden chord shimmer
+          [293.66, 440, 587.33, 880].forEach((f, i) => {
+            const osc = this.ctx.createOscillator();
+            const og = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, now + i * 0.06);
+            og.gain.setValueAtTime(0.0001, now + i * 0.06);
+            og.gain.linearRampToValueAtTime(0.05, now + 0.45 + i * 0.06);
+            og.gain.exponentialRampToValueAtTime(0.0001, now + 2.0);
+            osc.connect(og).connect(this.sfxGain);
+            osc.start(now + i * 0.06);
+            osc.stop(now + 2.1);
+          });
+        },
+
+        // 12.6s: Crisp mechanical chime for Newton 1687
+        playMechanicalChime() {
+          const now = this.ctx.currentTime;
+          [523.25, 659.25, 1046.5].forEach((f, i) => {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(f, now + i * 0.05);
+            g.gain.setValueAtTime(0.0001, now + i * 0.05);
+            g.gain.linearRampToValueAtTime(0.11 / (i + 1), now + i * 0.05 + 0.015);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.05 + 0.7);
+            osc.connect(g).connect(this.sfxGain);
+            osc.start(now + i * 0.05);
+            osc.stop(now + i * 0.05 + 0.75);
+          });
+        },
+
+        // 17.5s: Harmonic swell up (Mass increases)
+        playHarmonicSwellUp() {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const osc2 = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc2.type = 'triangle';
+          osc.frequency.setValueAtTime(140, now);
+          osc.frequency.exponentialRampToValueAtTime(240, now + 1.1);
+          osc2.frequency.setValueAtTime(280, now);
+          osc2.frequency.exponentialRampToValueAtTime(480, now + 1.1);
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(0.12, now + 0.5);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
+          osc.connect(g);
+          osc2.connect(g);
+          g.connect(this.sfxGain);
+          osc.start(now); osc2.start(now);
+          osc.stop(now + 1.45); osc2.stop(now + 1.45);
+        },
+
+        // 21.2s: Harmonic swell down (Distance stretches)
+        playHarmonicSwellDown() {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(360, now);
+          osc.frequency.exponentialRampToValueAtTime(150, now + 1.2);
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(0.09, now + 0.25);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 1.3);
+          osc.connect(g).connect(this.sfxGain);
+          osc.start(now);
+          osc.stop(now + 1.35);
+        },
+
+        // 25.5s: Clean digital lock-in chime for formula
+        playDigitalLock() {
+          const now = this.ctx.currentTime;
+          [587.33, 880, 1174.66].forEach((f, idx) => {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, now + idx * 0.07);
+            g.gain.setValueAtTime(0.0001, now + idx * 0.07);
+            g.gain.linearRampToValueAtTime(0.10, now + idx * 0.07 + 0.01);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.07 + 0.45);
+            osc.connect(g).connect(this.sfxGain);
+            osc.start(now + idx * 0.07);
+            osc.stop(now + idx * 0.07 + 0.5);
+          });
+        },
+
+        // 31.4s: Low mysterious sonar/anomaly pulse
+        playSonarAnomaly() {
+          const now = this.ctx.currentTime;
+          [0, 1.3].forEach((delay) => {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(220, now + delay);
+            osc.frequency.exponentialRampToValueAtTime(195, now + delay + 0.9);
+            g.gain.setValueAtTime(0.0001, now + delay);
+            g.gain.linearRampToValueAtTime(0.12, now + delay + 0.04);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + delay + 1.1);
+            osc.connect(g).connect(this.sfxGain);
+            osc.start(now + delay);
+            osc.stop(now + delay + 1.15);
+          });
+        },
+
+        // 37.2s: Subtle telemetry glitch/ping for Mercury orbit offset
+        playTelemetryGlitch() {
+          const now = this.ctx.currentTime;
+          [920, 1280, 740, 1480].forEach((f, i) => {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = 'square';
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = f;
+            osc.frequency.setValueAtTime(f, now + i * 0.08);
+            g.gain.setValueAtTime(0.0001, now + i * 0.08);
+            g.gain.linearRampToValueAtTime(0.06, now + i * 0.08 + 0.01);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.08 + 0.14);
+            osc.connect(filter).connect(g).connect(this.sfxGain);
+            osc.start(now + i * 0.08);
+            osc.stop(now + i * 0.08 + 0.16);
+          });
+        },
+
+        // 42.8s: Tension snap
+        playTensionSnap() {
+          const now = this.ctx.currentTime;
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = this.createNoiseBuffer(0.35);
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'highpass';
+          filter.frequency.value = 1400;
+          const ng = this.ctx.createGain();
+          ng.gain.setValueAtTime(0.20, now);
+          ng.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+          noise.connect(filter).connect(ng).connect(this.sfxGain);
+          noise.start(now);
+
+          const osc = this.ctx.createOscillator();
+          const og = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(420, now);
+          osc.frequency.exponentialRampToValueAtTime(65, now + 0.28);
+          og.gain.setValueAtTime(0.11, now);
+          og.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+          osc.connect(og).connect(this.sfxGain);
+          osc.start(now);
+          osc.stop(now + 0.32);
+        },
+
+        // 48.0s: Deep cinematic bass drop as Sun warps 3D spacetime grid
+        playCinematicBassDrop() {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const sub = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          sub.type = 'triangle';
+          osc.frequency.setValueAtTime(110, now);
+          osc.frequency.exponentialRampToValueAtTime(34, now + 1.8);
+          sub.frequency.setValueAtTime(165, now);
+          sub.frequency.exponentialRampToValueAtTime(51, now + 1.8);
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(0.28, now + 0.08);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 2.2);
+          osc.connect(g);
+          sub.connect(g);
+          g.connect(this.sfxGain);
+          osc.start(now); sub.start(now);
+          osc.stop(now + 2.3); sub.stop(now + 2.3);
+        },
+
+        // 59.5s: Ethereal crystalline shimmer as starlight bends
+        playCrystallineShimmer() {
+          const now = this.ctx.currentTime;
+          [1046.5, 1318.5, 1567.98, 2093.0].forEach((f, i) => {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, now + i * 0.12);
+            osc.frequency.exponentialRampToValueAtTime(f * 1.03, now + i * 0.12 + 1.4);
+            g.gain.setValueAtTime(0.0001, now + i * 0.12);
+            g.gain.linearRampToValueAtTime(0.06, now + i * 0.12 + 0.18);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.12 + 1.6);
+            osc.connect(g).connect(this.sfxGain);
+            osc.start(now + i * 0.12);
+            osc.stop(now + i * 0.12 + 1.7);
+          });
+        },
+
+        // 64.9s: Verdict impact hit
+        playVerdictImpact() {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(135, now);
+          osc.frequency.exponentialRampToValueAtTime(40, now + 0.65);
+          g.gain.setValueAtTime(0.26, now);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+          osc.connect(g).connect(this.sfxGain);
+          osc.start(now);
+          osc.stop(now + 0.85);
+
+          // Crisp golden chime overtone
+          const chime = this.ctx.createOscillator();
+          const cg = this.ctx.createGain();
+          chime.type = 'triangle';
+          chime.frequency.setValueAtTime(523.25, now);
+          cg.gain.setValueAtTime(0.09, now);
+          cg.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+          chime.connect(cg).connect(this.sfxGain);
+          chime.start(now);
+          chime.stop(now + 0.95);
+        },
+
+        // 70.5s: Crisp satellite digital pings
+        playSatellitePings() {
+          const now = this.ctx.currentTime;
+          [0, 0.55, 1.1, 1.75].forEach((d, idx) => {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(idx === 3 ? 1760 : 1320, now + d);
+            g.gain.setValueAtTime(0.0001, now + d);
+            g.gain.linearRampToValueAtTime(0.08, now + d + 0.01);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + d + 0.25);
+            osc.connect(g).connect(this.sfxGain);
+            osc.start(now + d);
+            osc.stop(now + d + 0.28);
+          });
+        },
+
+        // 76.5s: Uplifting thruster whoosh for Apollo launch
+        playThrusterWhoosh() {
+          const now = this.ctx.currentTime;
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = this.createNoiseBuffer(2.6);
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.Q.value = 1.1;
+          filter.frequency.setValueAtTime(160, now);
+          filter.frequency.exponentialRampToValueAtTime(1100, now + 1.4);
+          filter.frequency.exponentialRampToValueAtTime(340, now + 2.5);
+          const g = this.ctx.createGain();
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(0.14, now + 0.5);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 2.5);
+          noise.connect(filter).connect(g).connect(this.sfxGain);
+          noise.start(now);
+        },
+
+        // 83.5s: Warm major-9th ambient synth finale chord fading out smoothly to 92.3s
+        playFinaleChord() {
+          const now = this.ctx.currentTime;
+          // Cmaj9: C3, G3, B3, D4, E4
+          const freqs = [130.81, 196.0, 246.94, 293.66, 329.63];
+          freqs.forEach((f, idx) => {
+            const osc = this.ctx.createOscillator();
+            const filter = this.ctx.createBiquadFilter();
+            const g = this.ctx.createGain();
+            osc.type = idx === 0 ? 'sine' : 'triangle';
+            osc.frequency.setValueAtTime(f, now);
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(550, now);
+            filter.frequency.exponentialRampToValueAtTime(1200, now + 2.5);
+            filter.frequency.exponentialRampToValueAtTime(280, now + 8.5);
+            g.gain.setValueAtTime(0.0001, now);
+            g.gain.linearRampToValueAtTime(0.048, now + 1.4);
+            g.gain.setValueAtTime(0.045, now + 5.0);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + 8.7);
+            osc.connect(filter).connect(g).connect(this.sfxGain);
+            osc.start(now);
+            osc.stop(now + 8.8);
+          });
+        },
+      };
+
+      // =========================================================================
+      // 5. CANVAS DRAWING HELPERS
+      // =========================================================================
+      function drawRoundRect(x, y, w, h, r) {
+        const rad = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + rad, y);
+        ctx.arcTo(x + w, y, x + w, y + h, rad);
+        ctx.arcTo(x + w, y + h, x, y + h, rad);
+        ctx.arcTo(x, y + h, x, y, rad);
+        ctx.arcTo(x, y, x + w, y, rad);
+        ctx.closePath();
+      }
+
+      function drawGlowCircle(x, y, r, innerCol, midCol, glowCol, glowBlur = 24) {
+        ctx.save();
+        ctx.shadowColor = glowCol;
+        ctx.shadowBlur = glowBlur;
+        const grad = ctx.createRadialGradient(x - r * 0.28, y - r * 0.28, r * 0.08, x, y, r);
+        grad.addColorStop(0, innerCol);
+        grad.addColorStop(0.55, midCol);
+        grad.addColorStop(1, glowCol);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawArrow(x1, y1, x2, y2, color, lineWidth = 3, headLen = 12, dashed = false, dashOffset = 0) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const angle = Math.atan2(dy, dx);
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = lineWidth;
+        ctx.lineCap = 'round';
+        if (dashed) {
+          ctx.setLineDash([8, 7]);
+          ctx.lineDashOffset = dashOffset;
+        }
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawBadge(cx, y, text, color, u, alpha = 1) {
+        if (alpha <= 0.01) return;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.font = `700 ${Math.round(14 * u)}px "JetBrains Mono", monospace`;
+        const tw = ctx.measureText(text).width;
+        const padX = 18 * u;
+        const h = 32 * u;
+        const w = tw + padX * 2;
+        drawRoundRect(cx - w / 2, y - h / 2, w, h, h / 2);
+        ctx.fillStyle = 'rgba(7, 12, 28, 0.82)';
+        ctx.fill();
+        ctx.lineWidth = 1.5 * u;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+
+        // Small glowing indicator dot
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(cx - w / 2 + 12 * u, y, 3.5 * u, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, cx + 4 * u, y + 0.5 * u);
+        ctx.restore();
+      }
+
+      function drawStylizedApple(x, y, r, alpha = 1) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(x, y);
+        // Subtle glow
+        ctx.shadowColor = 'rgba(251, 113, 133, 0.65)';
+        ctx.shadowBlur = 22;
+        const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r * 1.15);
+        grad.addColorStop(0, '#fda4af');
+        grad.addColorStop(0.45, '#f43f5e');
+        grad.addColorStop(1, '#9f1239');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(0, -r * 0.72);
+        ctx.bezierCurveTo(r * 0.6, -r * 1.18, r * 1.25, -r * 0.45, r * 0.92, r * 0.45);
+        ctx.bezierCurveTo(r * 0.68, r * 1.05, r * 0.22, r * 1.08, 0, r * 0.88);
+        ctx.bezierCurveTo(-r * 0.22, r * 1.08, -r * 0.68, r * 1.05, -r * 0.92, r * 0.45);
+        ctx.bezierCurveTo(-r * 1.25, -r * 0.45, -r * 0.6, -r * 1.18, 0, -r * 0.72);
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Cyan rim highlight
+        ctx.strokeStyle = 'rgba(34, 211, 238, 0.75)';
+        ctx.lineWidth = Math.max(1.5, r * 0.08);
+        ctx.stroke();
+
+        // Stem
+        ctx.strokeStyle = '#d97706';
+        ctx.lineWidth = Math.max(2, r * 0.12);
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(0, -r * 0.72);
+        ctx.quadraticCurveTo(r * 0.08, -r * 1.18, r * 0.22, -r * 1.25);
+        ctx.stroke();
+
+        // Leaf
+        ctx.fillStyle = '#34d399';
+        ctx.beginPath();
+        ctx.ellipse(r * 0.36, -r * 1.05, r * 0.34, r * 0.15, -0.45, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawEarth(x, y, r, t) {
+        ctx.save();
+        // Atmosphere outer glow
+        const atmo = ctx.createRadialGradient(x, y, r * 0.85, x, y, r * 1.45);
+        atmo.addColorStop(0, 'rgba(56, 189, 248, 0.35)');
+        atmo.addColorStop(1, 'rgba(56, 189, 248, 0)');
+        ctx.fillStyle = atmo;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 1.45, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Base ocean sphere
+        const ocean = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
+        ocean.addColorStop(0, '#38bdf8');
+        ocean.addColorStop(0.55, '#0284c7');
+        ocean.addColorStop(1, '#082f49');
+        ctx.fillStyle = ocean;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Stylized rotating continents clipped inside sphere
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.clip();
+
+        const drift = ((t * 8) % (r * 3)) - r * 1.5;
+        ctx.fillStyle = 'rgba(52, 211, 153, 0.55)';
+        ctx.beginPath();
+        ctx.ellipse(x + drift - r * 0.3, y - r * 0.18, r * 0.42, r * 0.24, 0.3, 0, Math.PI * 2);
+        ctx.ellipse(x + drift + r * 0.45, y + r * 0.25, r * 0.36, r * 0.22, -0.4, 0, Math.PI * 2);
+        ctx.ellipse(x + drift + r * 1.2, y - r * 0.25, r * 0.4, r * 0.25, 0.15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Subtle cloud wisps
+        ctx.fillStyle = 'rgba(248, 250, 252, 0.22)';
+        ctx.beginPath();
+        ctx.ellipse(x - drift * 0.6, y - r * 0.45, r * 0.55, r * 0.1, 0, 0, Math.PI * 2);
+        ctx.ellipse(x + drift * 0.4, y + r * 0.42, r * 0.48, r * 0.09, 0.1, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Specular rim
+        ctx.strokeStyle = 'rgba(186, 230, 253, 0.55)';
+        ctx.lineWidth = Math.max(1.5, r * 0.04);
+        ctx.beginPath();
+        ctx.arc(x, y, r - 1, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawSun(x, y, r, t) {
+        ctx.save();
+        // Corona halo
+        const pulse = 1 + Math.sin(t * 3.2) * 0.04;
+        const corona = ctx.createRadialGradient(x, y, r * 0.6, x, y, r * 2.2 * pulse);
+        corona.addColorStop(0, 'rgba(251, 191, 36, 0.65)');
+        corona.addColorStop(0.45, 'rgba(245, 158, 11, 0.22)');
+        corona.addColorStop(1, 'rgba(245, 158, 11, 0)');
+        ctx.fillStyle = corona;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 2.2 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Solar core
+        const core = ctx.createRadialGradient(x - r * 0.22, y - r * 0.22, r * 0.08, x, y, r);
+        core.addColorStop(0, '#fef9c3');
+        core.addColorStop(0.45, '#fbbf24');
+        core.addColorStop(0.85, '#f59e0b');
+        core.addColorStop(1, '#d97706');
+        ctx.fillStyle = core;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawMoon(x, y, r) {
+        ctx.save();
+        const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
+        grad.addColorStop(0, '#f1f5f9');
+        grad.addColorStop(0.65, '#cbd5e1');
+        grad.addColorStop(1, '#64748b');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Craters
+        ctx.fillStyle = 'rgba(71, 85, 105, 0.35)';
+        ctx.beginPath();
+        ctx.arc(x - r * 0.25, y - r * 0.15, r * 0.2, 0, Math.PI * 2);
+        ctx.arc(x + r * 0.3, y + r * 0.22, r * 0.15, 0, Math.PI * 2);
+        ctx.arc(x + r * 0.1, y - r * 0.4, r * 0.11, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function wrapLines(text, maxWidth, fontStr) {
+        ctx.font = fontStr;
+        const words = text.split(' ');
+        const lines = [];
+        let line = '';
+        for (const w of words) {
+          const test = line ? `${line} ${w}` : w;
+          if (ctx.measureText(test).width > maxWidth && line) {
+            lines.push(line);
+            line = w;
+          } else {
+            line = test;
+          }
+        }
+        if (line) lines.push(line);
+        return lines;
+      }
+
+      // =========================================================================
+      // 6. BACKGROUND, WATERMARK & SUBTITLE OVERLAYS
+      // =========================================================================
+      function getLayout(W, H) {
+        const isPortrait = H > W;
+        const is916 = (W / H) < 0.65;
+        const u = Math.min(W, H) / 720; // Base scale unit (1.0 on 1280x720 & 720x1280, 1.33 on 960x1280)
+        const s = isPortrait ? u * 0.92 : u; // Gentle typography & object scaling
+        const topBarY = isPortrait ? H * 0.085 : H * 0.09;
+        const subTopLimit = isPortrait ? H * 0.80 : H * 0.815;
+        const stageTop = topBarY + 56 * s;
+        const stageBottom = subTopLimit - 16 * s;
+        const stageH = stageBottom - stageTop;
+        const stageCY = (stageTop + stageBottom) / 2;
+        return { W, H, cx: W / 2, cy: H / 2, isPortrait, is916, u, s, topBarY, stageTop, stageBottom, stageH, stageCY };
+      }
+
+      function drawCosmicBackground(L, t) {
+        const { W, H, cx, cy } = L;
+        // Deep navy cosmic gradient
+        const bg = ctx.createRadialGradient(cx, cy * 0.85, 20, cx, cy, Math.max(W, H) * 0.85);
+        bg.addColorStop(0, '#0c152e');
+        bg.addColorStop(0.55, '#070c1c');
+        bg.addColorStop(1, '#03060f');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // Ambient scene color nebula shift (Cyan for Newton, Coral for Paradox, Gold for Einstein)
+        let cyanAlpha = 0.09, goldAlpha = 0.03, coralAlpha = 0.0;
+        if (t >= 8.8 && t < 12.6) {
+          const p = invLerp(8.8, 11.5, t);
+          goldAlpha = lerp(0.03, 0.13, p);
+        } else if (t >= 31.4 && t < 42.8) {
+          coralAlpha = 0.08;
+          cyanAlpha = 0.05;
+        } else if (t >= 42.8 && t < 74.5) {
+          cyanAlpha = 0.03;
+          goldAlpha = 0.12;
+        } else if (t >= 74.5) {
+          cyanAlpha = 0.08;
+          goldAlpha = 0.08;
+        }
+
+        if (cyanAlpha > 0) {
+          const g1 = ctx.createRadialGradient(W * 0.22, H * 0.3, 10, W * 0.22, H * 0.3, Math.max(W, H) * 0.55);
+          g1.addColorStop(0, `rgba(34, 211, 238, ${cyanAlpha})`);
+          g1.addColorStop(1, 'rgba(34, 211, 238, 0)');
+          ctx.fillStyle = g1;
+          ctx.fillRect(0, 0, W, H);
+        }
+        if (goldAlpha > 0) {
+          const g2 = ctx.createRadialGradient(W * 0.78, H * 0.45, 10, W * 0.78, H * 0.45, Math.max(W, H) * 0.55);
+          g2.addColorStop(0, `rgba(251, 191, 36, ${goldAlpha})`);
+          g2.addColorStop(1, 'rgba(251, 191, 36, 0)');
+          ctx.fillStyle = g2;
+          ctx.fillRect(0, 0, W, H);
+        }
+        if (coralAlpha > 0) {
+          const g3 = ctx.createRadialGradient(cx, cy, 10, cx, cy, Math.max(W, H) * 0.5);
+          g3.addColorStop(0, `rgba(251, 113, 133, ${coralAlpha})`);
+          g3.addColorStop(1, 'rgba(251, 113, 133, 0)');
+          ctx.fillStyle = g3;
+          ctx.fillRect(0, 0, W, H);
+        }
+
+        // Parallax twinkling starfield
+        for (const st of STARS) {
+          const sx = ((st.x * W - t * st.speed * 4) % W + W) % W;
+          const sy = st.y * H;
+          const twinkle = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * (1.2 + st.speed) + st.phase));
+          ctx.fillStyle = st.tint;
+          ctx.globalAlpha = twinkle * 0.85;
+          ctx.beginPath();
+          ctx.arc(sx, sy, st.size * L.u * 0.85, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function drawSubtitles(L, t) {
+        if (!state.showSubtitles) return;
+        const active = SUBTITLES.find((s) => t >= s.start && t < s.end) || (t >= TOTAL_DURATION - 0.1 ? SUBTITLES[SUBTITLES.length - 1] : null);
+        if (!active) return;
+
+        // Smooth fade in/out at subtitle edges
+        const fadeIn = invLerp(active.start, active.start + 0.22, t);
+        const fadeOut = 1 - invLerp(active.end - 0.18, active.end, t);
+        const alpha = clamp(Math.min(fadeIn, fadeOut), 0, 1);
+
+        const fontSize = Math.round((L.isPortrait ? 24 : 23) * L.s);
+        const fontStr = `600 ${fontSize}px "Inter", sans-serif`;
+        const maxTextW = L.W * (L.isPortrait ? 0.84 : 0.74);
+        const lines = wrapLines(active.text, maxTextW, fontStr);
+
+        const lineH = fontSize * 1.38;
+        const padX = 24 * L.s;
+        const padY = 14 * L.s;
+        const boxW = Math.min(maxTextW + padX * 2, Math.max(...lines.map((l) => ctx.measureText(l).width)) + padX * 2);
+        const boxH = lines.length * lineH + padY * 1.65;
+
+        const baseBottom = L.isPortrait ? L.H - 78 * L.s : L.H - 30 * L.s;
+        const boxY = baseBottom - boxH;
+        const boxX = L.cx - boxW / 2;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        // Frosted cosmic subtitle pill
+        drawRoundRect(boxX, boxY, boxW, boxH, 16 * L.s);
+        ctx.fillStyle = 'rgba(4, 7, 18, 0.80)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
+        ctx.lineWidth = 1.2 * L.s;
+        ctx.stroke();
+
+        ctx.font = fontStr;
+        ctx.fillStyle = '#f8fafc';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0,0,0,0.65)';
+        ctx.shadowBlur = 6;
+        lines.forEach((line, i) => {
+          const ly = boxY + padY * 0.85 + lineH * (i + 0.5);
+          ctx.fillText(line, L.cx, ly);
+        });
+        ctx.restore();
+      }
+
+      function drawWatermark(L, t) {
+        if (!state.showWatermark) return;
+        // During Scene 6 (Outro), the watermark elevates & glows at bottom safe area cleanly
+        const isOutro = t >= 83.5;
+        if (isOutro) return; // Rendered prominently inside Scene 6 Outro card
+
+        ctx.save();
+        const fontSize = Math.round(14 * L.s);
+        ctx.font = `700 ${fontSize}px "Space Grotesk", "Inter", sans-serif`;
+        const label = state.account;
+        const tw = ctx.measureText(label).width;
+        const padX = 14 * L.s;
+        const h = 30 * L.s;
+        const w = tw + padX * 2 + 12 * L.s;
+
+        // Safe-area placement: Top-left on 16:9, bottom-center on portrait
+        const x = L.isPortrait ? L.cx - w / 2 : 28 * L.s;
+        const y = L.isPortrait ? L.H - 46 * L.s : 26 * L.s;
+
+        drawRoundRect(x, y, w, h, h / 2);
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.38)';
+        ctx.lineWidth = 1.2 * L.s;
+        ctx.stroke();
+
+        // Orbit icon dot
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(x + 14 * L.s, y + h / 2, 3.5 * L.s, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#e2e8f0';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, x + 24 * L.s, y + h / 2 + 0.5 * L.s);
+        ctx.restore();
+      }
+
+      // Subtle timeline progress bar along very top of canvas
+      function drawTopProgressBar(L, t) {
+        const pct = clamp(t / TOTAL_DURATION, 0, 1);
+        const h = 3.5 * L.u;
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.14)';
+        ctx.fillRect(0, 0, L.W, h);
+        const grad = ctx.createLinearGradient(0, 0, L.W, 0);
+        grad.addColorStop(0, '#22d3ee');
+        grad.addColorStop(0.55, '#fbbf24');
+        grad.addColorStop(1, '#34d399');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, L.W * pct, h);
+      }
+
+      // =========================================================================
+      // 7. SCENE RENDERERS (ALL 6 SCENES — 92.3 SECONDS)
+      // =========================================================================
+
+      // --- SCENE 1 (0.0s – 12.6s): Hook — Apel Newton hingga Kejutan Einstein ---
+      function renderScene1(L, t) {
+        const { cx, stageCY, stageTop, stageBottom, stageH, s, W, isPortrait } = L;
+
+        // Sub-scene 1A: Falling Apple (0.0 – 3.8s, fades out cleanly 3.5 – 4.0s)
+        if (t < 4.1) {
+          const alpha = 1 - invLerp(3.55, 4.05, t);
+          ctx.save();
+          ctx.globalAlpha = alpha;
+
+          drawBadge(cx, L.topBarY, 'GRAVITASI • KISAH KLASIK', '#22d3ee', s, easeOutCubic(invLerp(0.0, 0.6, t)));
+
+          // Minimalist glowing tree branch at top
+          const branchY = stageTop + stageH * 0.16;
+          ctx.save();
+          ctx.strokeStyle = 'rgba(148, 163, 184, 0.55)';
+          ctx.lineWidth = 4 * s;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(cx + 210 * s, branchY - 22 * s);
+          ctx.quadraticCurveTo(cx + 80 * s, branchY - 5 * s, cx - 28 * s, branchY + 4 * s);
+          ctx.stroke();
+
+          // Branch leaves
+          ctx.fillStyle = 'rgba(52, 211, 153, 0.65)';
+          ctx.beginPath();
+          ctx.ellipse(cx + 95 * s, branchY - 18 * s, 20 * s, 8 * s, -0.4, 0, Math.PI * 2);
+          ctx.ellipse(cx + 42 * s, branchY - 12 * s, 16 * s, 7 * s, -0.25, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          // Ground / Newton silhouette horizon
+          const groundY = stageBottom - stageH * 0.14;
+          ctx.strokeStyle = 'rgba(34, 211, 238, 0.35)';
+          ctx.lineWidth = 2 * s;
+          ctx.beginPath();
+          ctx.moveTo(cx - 190 * s, groundY);
+          ctx.lineTo(cx + 190 * s, groundY);
+          ctx.stroke();
+
+          // Apple fall physics: hangs gently 0.0-0.85s, accelerates 0.85-2.2s, bounces slightly at 2.2s
+          const startY = branchY + 26 * s;
+          const endY = groundY - 28 * s;
+          let appleY = startY;
+          let appleX = cx;
+          if (t < 0.85) {
+            appleX = cx + Math.sin(t * 7) * 2.5 * s;
+          } else if (t < 2.2) {
+            const p = invLerp(0.85, 2.2, t);
+            appleY = lerp(startY, endY, p * p); // Gravity quadratic acceleration!
+          } else {
+            const b = t - 2.2;
+            const bounce = Math.abs(Math.sin(b * 6.5)) * Math.exp(-b * 3.8) * 26 * s;
+            appleY = endY - bounce;
+          }
+
+          // Motion trail & downward cyan gravity vectors during fall
+          if (t >= 0.85) {
+            const trailAlpha = clamp(1 - invLerp(2.3, 3.2, t), 0.25, 1);
+            ctx.save();
+            ctx.globalAlpha = alpha * trailAlpha;
+            const gradTrail = ctx.createLinearGradient(cx, startY, cx, appleY);
+            gradTrail.addColorStop(0, 'rgba(34, 211, 238, 0)');
+            gradTrail.addColorStop(1, 'rgba(34, 211, 238, 0.65)');
+            ctx.strokeStyle = gradTrail;
+            ctx.lineWidth = 3 * s;
+            ctx.setLineDash([7 * s, 7 * s]);
+            ctx.beginPath();
+            ctx.moveTo(cx, startY);
+            ctx.lineTo(cx, appleY - 28 * s);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Side vector arrows
+            const vecY = Math.min(appleY - 30 * s, endY - 40 * s);
+            if (vecY > startY + 25 * s) {
+              drawArrow(cx - 56 * s, startY + 12 * s, cx - 56 * s, vecY, 'rgba(34, 211, 238, 0.75)', 2.5 * s, 10 * s);
+              drawArrow(cx + 56 * s, startY + 12 * s, cx + 56 * s, vecY, 'rgba(34, 211, 238, 0.75)', 2.5 * s, 10 * s);
+              ctx.font = `700 ${Math.round(15 * s)}px "JetBrains Mono", monospace`;
+              ctx.fillStyle = '#22d3ee';
+              ctx.textAlign = 'left';
+              ctx.fillText('F = m·g', cx + 72 * s, (startY + vecY) / 2);
+            }
+            ctx.restore();
+          }
+
+          // Concentric impact ripples at t >= 2.2s
+          if (t >= 2.2) {
+            const rt = t - 2.2;
+            [0, 0.22].forEach((delay) => {
+              const p = invLerp(delay, delay + 1.1, rt);
+              if (p > 0 && p < 1) {
+                ctx.strokeStyle = `rgba(34, 211, 238, ${(1 - p) * 0.7})`;
+                ctx.lineWidth = 2.5 * s;
+                ctx.beginPath();
+                ctx.ellipse(cx, groundY, (24 + p * 150) * s, (6 + p * 26) * s, 0, 0, Math.PI * 2);
+                ctx.stroke();
+              }
+            });
+          }
+
+          drawStylizedApple(appleX, appleY, 26 * s, 1);
+
+          // Label below ground
+          ctx.font = `700 ${Math.round(16 * s)}px "Space Grotesk", sans-serif`;
+          ctx.fillStyle = '#94a3b8';
+          ctx.textAlign = 'center';
+          ctx.fillText('ISAAC NEWTON', cx, groundY + 30 * s);
+          ctx.restore();
+        }
+
+        // Sub-scene 1B: 200+ Tahun Gaya Tarik-Menarik (3.6 – 9.6s)
+        if (t >= 3.6 && t < 10.6) {
+          const enter = easeOutCubic(invLerp(3.6, 4.3, t));
+          const exit = 1 - invLerp(9.1, 10.3, t);
+          ctx.save();
+          ctx.globalAlpha = enter * exit;
+
+          drawBadge(cx, L.topBarY, 'PARADIGMA KLASIK', '#22d3ee', s, enter);
+
+          // Kinetic counter 0 -> 200+ TAHUN
+          const counterVal = Math.round(lerp(0, 200, easeOutCubic(invLerp(3.9, 5.5, t))));
+          const titleY = stageTop + stageH * 0.14;
+          ctx.font = `800 ${Math.round((isPortrait ? 52 : 58) * s)}px "Space Grotesk", sans-serif`;
+          ctx.fillStyle = '#f8fafc';
+          ctx.textAlign = 'center';
+          ctx.shadowColor = 'rgba(34, 211, 238, 0.45)';
+          ctx.shadowBlur = 18;
+          ctx.fillText(`${counterVal}+ TAHUN`, cx, titleY);
+          ctx.shadowBlur = 0;
+
+          ctx.font = `700 ${Math.round(17 * s)}px "JetBrains Mono", monospace`;
+          ctx.fillStyle = '#22d3ee';
+          ctx.fillText('GAYA TARIK-MENARIK', cx, titleY + 36 * s);
+
+          // Orbiting celestial pair pulled by cyan vectors
+          const orbitCY = stageCY + stageH * 0.14;
+          const sep = (isPortrait ? 145 : 195) * s;
+          const angle = (t - 3.6) * 0.65;
+          const ax = cx + Math.cos(angle) * sep;
+          const ay = orbitCY + Math.sin(angle) * sep * 0.36;
+          const bx = cx - Math.cos(angle) * sep;
+          const by = orbitCY - Math.sin(angle) * sep * 0.36;
+
+          // Subtle elliptical orbital track
+          ctx.strokeStyle = 'rgba(34, 211, 238, 0.18)';
+          ctx.lineWidth = 1.5 * s;
+          ctx.beginPath();
+          ctx.ellipse(cx, orbitCY, sep, sep * 0.36, 0, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Pulsing cyan attraction line & inward arrows
+          const dashOff = -t * 48;
+          ctx.strokeStyle = 'rgba(34, 211, 238, 0.7)';
+          ctx.lineWidth = 2.5 * s;
+          ctx.setLineDash([10 * s, 8 * s]);
+          ctx.lineDashOffset = dashOff;
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(bx, by);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Inward force vectors from each body toward center
+          drawArrow(ax, ay, lerp(ax, cx, 0.48), lerp(ay, orbitCY, 0.48), '#22d3ee', 3.5 * s, 12 * s);
+          drawArrow(bx, by, lerp(bx, cx, 0.48), lerp(by, orbitCY, 0.48), '#22d3ee', 3.5 * s, 12 * s);
+
+          // Two celestial bodies
+          drawGlowCircle(ax, ay, 36 * s, '#e0f2fe', '#38bdf8', '#0284c7', 26);
+          drawGlowCircle(bx, by, 28 * s, '#f0f9ff', '#22d3ee', '#0891b2', 22);
+          ctx.restore();
+        }
+
+        // Sub-scene 1C: Golden Spacetime Wave & EINSTEIN Reveal (8.8 – 12.6s)
+        if (t >= 8.8) {
+          const p = easeOutCubic(invLerp(8.8, 10.6, t));
+          const fadeOut = 1 - invLerp(12.2, 12.6, t);
+          ctx.save();
+          ctx.globalAlpha = fadeOut;
+
+          // Sweeping golden warped grid background
+          const sweepX = lerp(-W * 0.25, W * 1.25, easeInOutCubic(invLerp(8.8, 11.0, t)));
+          const cols = 18, rows = 12;
+          const cellW = W / (cols - 2);
+          const cellH = L.H / (rows - 2);
+
+          ctx.strokeStyle = `rgba(251, 191, 36, ${0.32 * p})`;
+          ctx.lineWidth = 1.4 * s;
+
+          // Horizontal warped grid lines
+          for (let r = 0; r < rows; r++) {
+            ctx.beginPath();
+            for (let c = 0; c <= cols; c++) {
+              const gx = (c - 1) * cellW;
+              const gy = (r - 1) * cellH;
+              if (gx > sweepX + 120 * s) continue;
+              const dx = gx - cx;
+              const dy = gy - stageCY;
+              const dist = Math.hypot(dx, dy);
+              const pull = (130 * s * p) / (dist / (90 * s) + 1.15);
+              const wx = gx - (dx / (dist + 1)) * pull * 0.45;
+              const wy = gy - (dy / (dist + 1)) * pull * 0.45 + Math.exp(-Math.pow((gx - sweepX) / (120 * s), 2)) * 28 * s;
+              if (c === 0) ctx.moveTo(wx, wy);
+              else ctx.lineTo(wx, wy);
+            }
+            ctx.stroke();
+          }
+          // Vertical warped grid lines
+          for (let c = 0; c < cols; c++) {
+            const gxBase = (c - 1) * cellW;
+            if (gxBase > sweepX + 120 * s) continue;
+            ctx.beginPath();
+            for (let r = 0; r <= rows; r++) {
+              const gx = gxBase;
+              const gy = (r - 1) * cellH;
+              const dx = gx - cx;
+              const dy = gy - stageCY;
+              const dist = Math.hypot(dx, dy);
+              const pull = (130 * s * p) / (dist / (90 * s) + 1.15);
+              const wx = gx - (dx / (dist + 1)) * pull * 0.45;
+              const wy = gy - (dy / (dist + 1)) * pull * 0.45;
+              if (r === 0) ctx.moveTo(wx, wy);
+              else ctx.lineTo(wx, wy);
+            }
+            ctx.stroke();
+          }
+
+          // Bright golden energy wave front slicing across screen
+          const waveVis = 1 - invLerp(10.5, 11.4, t);
+          if (waveVis > 0) {
+            const wg = ctx.createLinearGradient(sweepX - 80 * s, 0, sweepX + 35 * s, 0);
+            wg.addColorStop(0, 'rgba(251, 191, 36, 0)');
+            wg.addColorStop(0.7, `rgba(251, 191, 36, ${0.55 * waveVis})`);
+            wg.addColorStop(1, 'rgba(254, 249, 195, 0)');
+            ctx.fillStyle = wg;
+            ctx.fillRect(sweepX - 80 * s, 0, 115 * s, L.H);
+          }
+
+          // Bold Kinetic Typography: EINSTEIN
+          const textP = easeOutBack(invLerp(9.35, 10.45, t));
+          ctx.save();
+          ctx.translate(cx, stageCY);
+          ctx.scale(lerp(0.78, 1, textP), lerp(0.78, 1, textP));
+          ctx.globalAlpha = clamp(invLerp(9.35, 9.9, t)) * fadeOut;
+
+          ctx.font = `800 ${Math.round((isPortrait ? 68 : 88) * s)}px "Space Grotesk", sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.shadowColor = 'rgba(251, 191, 36, 0.7)';
+          ctx.shadowBlur = 32;
+          const tg = ctx.createLinearGradient(0, -40 * s, 0, 45 * s);
+          tg.addColorStop(0, '#fef9c3');
+          tg.addColorStop(0.5, '#fbbf24');
+          tg.addColorStop(1, '#f59e0b');
+          ctx.fillStyle = tg;
+          ctx.fillText('EINSTEIN', 0, -10 * s);
+          ctx.shadowBlur = 0;
+
+          ctx.font = `700 ${Math.round(18 * s)}px "JetBrains Mono", monospace`;
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillText('MENGUBAH SEGALANYA', 0, 48 * s);
+          ctx.restore();
+          ctx.restore();
+        }
+      }
+
+      // --- SCENE 2 (12.6s – 31.4s): Hukum Gravitasi Newton (1687) ---
+      function renderScene2(L, t) {
+        const { cx, stageTop, stageBottom, stageCY, stageH, s, isPortrait } = L;
+        const enter = easeOutCubic(invLerp(12.6, 13.3, t));
+        const exit = 1 - invLerp(30.9, 31.4, t);
+        ctx.save();
+        ctx.globalAlpha = enter * exit;
+
+        drawBadge(cx, L.topBarY, 'ISAAC NEWTON • 1687', '#22d3ee', s, enter);
+
+        // Part 2A: Mass & Distance Interactive Force Demo (12.6 – 24.8s)
+        if (t < 25.0) {
+          const demoFade = 1 - invLerp(24.3, 24.9, t);
+          ctx.save();
+          ctx.globalAlpha = enter * demoFade;
+
+          // Smooth parameters driven by timeline
+          const massUp = easeInOutCubic(invLerp(17.6, 18.8, t)) * (1 - easeInOutCubic(invLerp(20.7, 21.5, t)));
+          const distUp = easeInOutCubic(invLerp(21.2, 22.4, t));
+
+          const baseSep = (isPortrait ? 135 : 190) * s;
+          const sep = lerp(baseSep, isPortrait ? 220 * s : 320 * s, distUp);
+          const r1 = lerp(38 * s, 64 * s, massUp);
+          const r2 = lerp(28 * s, 50 * s, massUp);
+
+          const x1 = cx - sep;
+          const x2 = cx + sep;
+          const y = stageCY + 10 * s;
+
+          // Force strength visual indicator
+          const forceStrength = lerp(1.0, 2.2, massUp) * lerp(1.0, 0.35, distUp);
+          const lineW = clamp(3.5 * forceStrength, 1.5, 8.5) * s;
+          const vecLen = clamp(75 * forceStrength, 32, 130) * s;
+          const vecAlpha = clamp(0.4 + 0.55 * forceStrength, 0.35, 1);
+
+          // Animated dashed force tether
+          ctx.save();
+          ctx.strokeStyle = `rgba(34, 211, 238, ${vecAlpha * 0.7})`;
+          ctx.lineWidth = lineW * 0.65;
+          ctx.setLineDash([12 * s, 9 * s]);
+          ctx.lineDashOffset = -t * 55 * forceStrength;
+          ctx.beginPath();
+          ctx.moveTo(x1 + r1, y);
+          ctx.lineTo(x2 - r2, y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+
+          // Inward force arrows (F)
+          const arrowCol = `rgba(34, 211, 238, ${vecAlpha})`;
+          drawArrow(x1 + r1 + 10 * s, y, Math.min(cx - 12 * s, x1 + r1 + 10 * s + vecLen), y, arrowCol, lineW, (10 + forceStrength * 3) * s);
+          drawArrow(x2 - r2 - 10 * s, y, Math.max(cx + 12 * s, x2 - r2 - 10 * s - vecLen), y, arrowCol, lineW, (10 + forceStrength * 3) * s);
+
+          // Force label F
+          ctx.font = `700 ${Math.round(20 * s)}px "Space Grotesk", sans-serif`;
+          ctx.fillStyle = '#22d3ee';
+          ctx.textAlign = 'center';
+          ctx.fillText('F', cx, y - 24 * s);
+
+          // Distance bracket (r) below spheres
+          const brY = y + Math.max(r1, r2) + 34 * s;
+          ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+          ctx.lineWidth = 1.5 * s;
+          ctx.beginPath();
+          ctx.moveTo(x1, brY - 8 * s); ctx.lineTo(x1, brY + 8 * s);
+          ctx.moveTo(x1, brY); ctx.lineTo(x2, brY);
+          ctx.moveTo(x2, brY - 8 * s); ctx.lineTo(x2, brY + 8 * s);
+          ctx.stroke();
+          ctx.font = `600 ${Math.round(16 * s)}px "JetBrains Mono", monospace`;
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillText('jarak (r)', cx, brY + 24 * s);
+
+          // Glowing spheres m1 and m2
+          drawGlowCircle(x1, y, r1, '#e0f2fe', '#38bdf8', '#0284c7', 28);
+          drawGlowCircle(x2, y, r2, '#cffafe', '#22d3ee', '#0e7490', 24);
+
+          ctx.font = `700 ${Math.round(20 * s)}px "Space Grotesk", sans-serif`;
+          ctx.fillStyle = '#040712';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('m₁', x1, y);
+          ctx.fillText('m₂', x2, y);
+
+          // Dynamic status pill above stage
+          let pillText = 'GAYA TARIK TAK KASATMATA';
+          let pillCol = '#22d3ee';
+          if (t >= 17.6 && t < 21.2) {
+            pillText = 'MASSA ↑   →   GAYA TARIK ↑';
+            pillCol = '#38bdf8';
+          } else if (t >= 21.2) {
+            pillText = 'JARAK ↑   →   GAYA TARIK ↓';
+            pillCol = '#94a3b8';
+          }
+          const pillY = stageTop + stageH * 0.14;
+          ctx.font = `700 ${Math.round(18 * s)}px "JetBrains Mono", monospace`;
+          const pw = ctx.measureText(pillText).width + 38 * s;
+          const ph = 42 * s;
+          drawRoundRect(cx - pw / 2, pillY - ph / 2, pw, ph, 12 * s);
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+          ctx.fill();
+          ctx.strokeStyle = pillCol;
+          ctx.lineWidth = 1.8 * s;
+          ctx.stroke();
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillText(pillText, cx, pillY + 1 * s);
+
+          ctx.restore();
+        }
+
+        // Part 2B: Formula Card + Earth/Apple/Moon Orbit (24.5 – 31.4s)
+        if (t >= 24.5) {
+          const p = easeOutBack(invLerp(24.5, 25.4, t));
+          const cardAlpha = clamp(invLerp(24.5, 25.1, t));
+
+          // Layout: Top/Bottom in Portrait, Left/Right in Landscape
+          const cardX = isPortrait ? cx : cx - 235 * s;
+          const cardY = isPortrait ? stageTop + stageH * 0.22 : stageCY;
+          const orbX  = isPortrait ? cx : cx + 215 * s;
+          const orbY  = isPortrait ? stageTop + stageH * 0.67 : stageCY;
+
+          // Glassmorphic Formula Card
+          ctx.save();
+          ctx.globalAlpha = cardAlpha * exit;
+          ctx.translate(cardX, cardY);
+          ctx.scale(lerp(0.85, 1, p), lerp(0.85, 1, p));
+
+          const cw = (isPortrait ? 430 : 390) * s;
+          const ch = 155 * s;
+          drawRoundRect(-cw / 2, -ch / 2, cw, ch, 20 * s);
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+          ctx.fill();
+          ctx.shadowColor = 'rgba(34, 211, 238, 0.35)';
+          ctx.shadowBlur = 22;
+          ctx.strokeStyle = '#22d3ee';
+          ctx.lineWidth = 2 * s;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          ctx.font = `700 ${Math.round(13 * s)}px "JetBrains Mono", monospace`;
+          ctx.fillStyle = '#22d3ee';
+          ctx.textAlign = 'center';
+          ctx.fillText('HUKUM GRAVITASI UNIVERSAL', 0, -ch * 0.31);
+
+          // Proper Math Equation: F = G · (m₁ · m₂) / r²
+          ctx.fillStyle = '#f8fafc';
+          ctx.textBaseline = 'middle';
+          ctx.font = `700 ${Math.round(38 * s)}px "Space Grotesk", serif`;
+          ctx.textAlign = 'right';
+          ctx.fillText('F = G', -12 * s, 12 * s);
+
+          // Multiplication dot
+          ctx.beginPath();
+          ctx.arc(0, 12 * s, 3 * s, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Fraction bar
+          const fx = 76 * s;
+          ctx.strokeStyle = '#22d3ee';
+          ctx.lineWidth = 2.5 * s;
+          ctx.beginPath();
+          ctx.moveTo(16 * s, 12 * s);
+          ctx.lineTo(136 * s, 12 * s);
+          ctx.stroke();
+
+          ctx.textAlign = 'center';
+          ctx.font = `700 ${Math.round(28 * s)}px "Space Grotesk", sans-serif`;
+          ctx.fillText('m₁ · m₂', fx, -10 * s);
+          ctx.fillText('r²', fx, 36 * s);
+          ctx.restore();
+
+          // Earth + Horizon Falling Apple + Orbiting Moon
+          const orbAlpha = clamp(invLerp(25.2, 26.0, t)) * exit;
+          ctx.save();
+          ctx.globalAlpha = orbAlpha;
+
+          const earthR = (isPortrait ? 56 : 54) * s;
+          const moonOrbitR = (isPortrait ? 150 : 155) * s;
+
+          // Moon orbit ring
+          ctx.strokeStyle = 'rgba(34, 211, 238, 0.28)';
+          ctx.lineWidth = 1.8 * s;
+          ctx.setLineDash([7 * s, 6 * s]);
+          ctx.beginPath();
+          ctx.arc(orbX, orbY, moonOrbitR, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Moon position
+          const mAngle = -Math.PI * 0.25 + (t - 25.0) * 0.85;
+          const mx = orbX + Math.cos(mAngle) * moonOrbitR;
+          const my = orbY + Math.sin(mAngle) * moonOrbitR;
+
+          // Cyan gravity line from Moon to Earth
+          drawArrow(mx, my, lerp(mx, orbX, 0.45), lerp(my, orbY, 0.45), '#22d3ee', 2.5 * s, 10 * s, true, -t * 45);
+
+          // Earth
+          drawEarth(orbX, orbY, earthR, t);
+
+          // Miniature apple dropping onto Earth's top horizon (looping cleanly)
+          const appleCycle = ((t - 25.0) % 2.4) / 2.4;
+          const fallP = clamp(appleCycle / 0.65, 0, 1);
+          const miniAppleY = orbY - earthR - lerp(44 * s, 7 * s, fallP * fallP);
+          drawStylizedApple(orbX, miniAppleY, 10 * s, 1 - invLerp(0.85, 1.0, appleCycle));
+
+          // Small label for Apel & Bulan
+          ctx.font = `600 ${Math.round(13 * s)}px "JetBrains Mono", monospace`;
+          ctx.fillStyle = '#fda4af';
+          ctx.textAlign = 'left';
+          ctx.fillText('Apel ↓', orbX + 18 * s, orbY - earthR - 26 * s);
+
+          // Moon
+          drawMoon(mx, my, 17 * s);
+          ctx.fillStyle = '#e2e8f0';
+          ctx.textAlign = 'center';
+          ctx.fillText('Bulan', mx, my - 26 * s);
+
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+
+      // --- SCENE 3 (31.4s – 42.8s): Paradoks Ruang Hampa & Anomali Merkurius ---
+      function renderScene3(L, t) {
+        const { cx, stageTop, stageCY, stageH, s, isPortrait } = L;
+        const enter = easeOutCubic(invLerp(31.4, 32.0, t));
+        const exit = 1 - invLerp(42.3, 42.8, t);
+        ctx.save();
+        ctx.globalAlpha = enter * exit;
+
+        drawBadge(cx, L.topBarY, 'KELEMAHAN TEORI NEWTON', '#fb7185', s, enter);
+
+        // Part 3A: Instant Action Across Vacuum Paradox (31.4 – 37.5s)
+        if (t < 37.6) {
+          const fadeOut = 1 - invLerp(36.9, 37.5, t);
+          ctx.save();
+          ctx.globalAlpha = enter * fadeOut;
+
+          const span = (isPortrait ? 200 : 310) * s;
+          const sunX = cx - span;
+          const earthX = cx + span;
+          const y = stageCY + 8 * s;
+
+          // Flickering cyan tether across vacuum
+          const flicker = 0.35 + 0.65 * Math.abs(Math.sin(t * 14));
+          ctx.strokeStyle = `rgba(34, 211, 238, ${flicker * 0.7})`;
+          ctx.lineWidth = 2.5 * s;
+          ctx.setLineDash([10 * s, 12 * s]);
+          ctx.lineDashOffset = -t * 90;
+          ctx.beginPath();
+          ctx.moveTo(sunX + 60 * s, y);
+          ctx.lineTo(earthX - 38 * s, y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Pulsing coral question marks along vacuum
+          [-0.4, 0, 0.4].forEach((offset, idx) => {
+            const qx = cx + offset * span * 1.1;
+            const pulse = 0.5 + 0.5 * Math.sin(t * 5 - idx * 1.1);
+            const r = (22 + pulse * 14) * s;
+            ctx.strokeStyle = `rgba(251, 113, 133, ${0.55 * (1 - pulse * 0.5)})`;
+            ctx.lineWidth = 1.6 * s;
+            ctx.beginPath();
+            ctx.arc(qx, y, r, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.font = `800 ${Math.round(24 * s)}px "Space Grotesk", sans-serif`;
+            ctx.fillStyle = '#fb7185';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('?', qx, y);
+          });
+
+          // Sun and Earth
+          drawSun(sunX, y, (isPortrait ? 52 : 62) * s, t);
+          drawEarth(earthX, y, (isPortrait ? 30 : 34) * s, t);
+
+          ctx.font = `600 ${Math.round(14 * s)}px "JetBrains Mono", monospace`;
+          ctx.fillStyle = '#fbbf24';
+          ctx.textAlign = 'center';
+          ctx.fillText('MATAHARI', sunX, y + 82 * s);
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillText('BUMI', earthX, y + 58 * s);
+
+          // Kinetic labels
+          ctx.font = `700 ${Math.round(15 * s)}px "JetBrains Mono", monospace`;
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillText('RUANG HAMPA (150 JUTA KM)', cx, y + 65 * s);
+
+          // Coral Alert Tag
+          const tagY = stageTop + stageH * 0.16;
+          const tag = 'TARIKAN INSTAN?';
+          ctx.font = `800 ${Math.round(26 * s)}px "Space Grotesk", sans-serif`;
+          const tw = ctx.measureText(tag).width + 40 * s;
+          drawRoundRect(cx - tw / 2, tagY - 24 * s, tw, 48 * s, 14 * s);
+          ctx.fillStyle = 'rgba(251, 113, 133, 0.14)';
+          ctx.fill();
+          ctx.strokeStyle = '#fb7185';
+          ctx.lineWidth = 1.8 * s;
+          ctx.stroke();
+          ctx.fillStyle = '#fda4af';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(tag, cx, tagY);
+
+          ctx.restore();
+        }
+
+        // Part 3B: Mercury Precession Anomaly (37.2 – 42.8s)
+        if (t >= 37.2) {
+          const p = easeOutCubic(invLerp(37.2, 38.0, t));
+          ctx.save();
+          ctx.globalAlpha = p * exit;
+
+          const oy = stageCY + 14 * s;
+          const a = (isPortrait ? 185 : 225) * s; // Semi-major axis
+          const b = a * 0.62;                     // Semi-minor axis
+          const focusOffset = Math.sqrt(a * a - b * b) * 0.65;
+
+          // Sun sits at one focus (slightly left of center)
+          const sunX = cx - focusOffset * 0.5;
+          const sunY = oy;
+
+          // 1. Fixed Newtonian prediction ellipse (cyan dashed)
+          ctx.save();
+          ctx.translate(sunX, sunY);
+          ctx.strokeStyle = 'rgba(34, 211, 238, 0.55)';
+          ctx.lineWidth = 2.2 * s;
+          ctx.setLineDash([9 * s, 7 * s]);
+          ctx.beginPath();
+          ctx.ellipse(focusOffset, 0, a, b, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+
+          // 2. Actual precessing rosette orbit of Mercury (amber glowing)
+          const localT = t - 37.2;
+          const precSpeed = 0.22; // Exaggerated clearly for motion graphic pedagogy
+          const totalLoops = 2.6;
+          const prog = clamp(localT / 4.8, 0, 1);
+          const maxTheta = prog * Math.PI * 2 * totalLoops;
+
+          ctx.save();
+          ctx.translate(sunX, sunY);
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 2.4 * s;
+          ctx.shadowColor = 'rgba(251, 191, 36, 0.55)';
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+          const steps = 260;
+          let mx = 0, my = 0;
+          for (let i = 0; i <= steps; i++) {
+            const th = (i / steps) * maxTheta;
+            const rot = th * precSpeed;
+            const ex = Math.cos(th) * a + focusOffset;
+            const ey = Math.sin(th) * b;
+            // Rotate point around Sun focus
+            const rx = ex * Math.cos(rot) - ey * Math.sin(rot);
+            const ry = ex * Math.sin(rot) + ey * Math.cos(rot);
+            if (i === 0) ctx.moveTo(rx, ry);
+            else ctx.lineTo(rx, ry);
+            if (i === steps) { mx = rx; my = ry; }
+          }
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          // Mercury glowing sphere at tip
+          drawGlowCircle(mx, my, 10 * s, '#fef3c7', '#fbbf24', '#f59e0b', 16);
+          ctx.restore();
+
+          // Sun at focus
+          drawSun(sunX, sunY, 34 * s, t);
+
+          // Legend & Callout Tag
+          const topInfoY = stageTop + stageH * 0.11;
+          ctx.font = `700 ${Math.round(15 * s)}px "JetBrains Mono", monospace`;
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#22d3ee';
+          ctx.fillText('--- Prediksi Newton', cx - 125 * s, topInfoY);
+          ctx.fillStyle = '#fbbf24';
+          ctx.fillText('━━━ Orbit Merkurius', cx + 125 * s, topInfoY);
+
+          // Coral offset callout badge
+          const callAlpha = easeOutBack(invLerp(38.6, 39.4, t));
+          if (callAlpha > 0.01) {
+            ctx.save();
+            ctx.globalAlpha = callAlpha * exit;
+            const tagX = cx + (isPortrait ? 95 : 195) * s;
+            const tagY = oy - b * 0.82;
+            const label = 'Meleset 43″ / abad!';
+            ctx.font = `700 ${Math.round(15 * s)}px "JetBrains Mono", monospace`;
+            const tw = ctx.measureText(label).width + 26 * s;
+            drawRoundRect(tagX - tw / 2, tagY - 19 * s, tw, 38 * s, 10 * s);
+            ctx.fillStyle = 'rgba(136, 19, 55, 0.85)';
+            ctx.fill();
+            ctx.strokeStyle = '#fb7185';
+            ctx.lineWidth = 1.6 * s;
+            ctx.stroke();
+            ctx.fillStyle = '#ffe4e6';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, tagX, tagY);
+            ctx.restore();
+          }
+
+          ctx.restore();
+        }
+
+        ctx.restore();
+      }
+
+      // --- SCENE 4 (42.8s – 64.9s): Relativitas Umum Einstein (1915) & 3D Spacetime Grid ---
+      function renderScene4(L, t) {
+        const { cx, stageTop, stageCY, stageH, s, isPortrait } = L;
+        const enter = easeOutCubic(invLerp(42.8, 43.4, t));
+        const exit = 1 - invLerp(64.4, 64.9, t);
+        ctx.save();
+        ctx.globalAlpha = enter * exit;
+
+        drawBadge(cx, L.topBarY, 'ALBERT EINSTEIN • 1915', '#fbbf24', s, enter);
+
+        // Part 4A: Cyan Force Rope SNAPS and vanishes (42.8 – 46.8s)
+        if (t < 47.0) {
+          const snapFade = 1 - invLerp(46.0, 46.9, t);
+          ctx.save();
+          ctx.globalAlpha = enter * snapFade;
+
+          const snapP = invLerp(43.2, 44.8, t);
+          const span = (isPortrait ? 200 : 280) * s;
+          const y = stageCY;
+
+          if (snapP === 0) {
+            ctx.strokeStyle = '#22d3ee';
+            ctx.lineWidth = 4 * s;
+            ctx.beginPath();
+            ctx.moveTo(cx - span, y);
+            ctx.lineTo(cx + span, y);
+            ctx.stroke();
+          } else {
+            // Two snapped halves recoiling outward
+            const gap = easeOutCubic(snapP) * 140 * s;
+            const whip = Math.sin(snapP * 18) * (1 - snapP) * 24 * s;
+            ctx.strokeStyle = `rgba(34, 211, 238, ${1 - snapP * 0.7})`;
+            ctx.lineWidth = 3.5 * s;
+
+            ctx.beginPath();
+            ctx.moveTo(cx - span, y);
+            ctx.quadraticCurveTo(cx - span * 0.5, y + whip, cx - gap, y - whip * 0.6);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(cx + span, y);
+            ctx.quadraticCurveTo(cx + span * 0.5, y - whip, cx + gap, y + whip * 0.6);
+            ctx.stroke();
+
+            // Spark particles at snap center
+            for (let i = 0; i < 12; i++) {
+              const ang = (i / 12) * Math.PI * 2 + 0.3;
+              const dist = easeOutCubic(snapP) * (50 + (i % 3) * 32) * s;
+              ctx.fillStyle = i % 2 === 0 ? '#22d3ee' : '#fbbf24';
+              ctx.globalAlpha = (1 - snapP) * snapFade;
+              ctx.beginPath();
+              ctx.arc(cx + Math.cos(ang) * dist, y + Math.sin(ang) * dist, 3.5 * s, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+
+          // Kinetic title swap
+          ctx.globalAlpha = snapFade;
+          ctx.font = `800 ${Math.round((isPortrait ? 30 : 38) * s)}px "Space Grotesk", sans-serif`;
+          ctx.textAlign = 'center';
+          if (t < 44.6) {
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('BUKAN TALI TARIKAN', cx, stageTop + stageH * 0.22);
+          } else {
+            ctx.fillStyle = '#fbbf24';
+            ctx.shadowColor = 'rgba(251, 191, 36, 0.5)';
+            ctx.shadowBlur = 18;
+            ctx.fillText('KELENGKUNGAN RUANG-WAKTU', cx, stageTop + stageH * 0.22);
+            ctx.shadowBlur = 0;
+          }
+          ctx.restore();
+        }
+
+        // Part 4B: True 3D-Projected Perspective Spacetime Mesh + Sun Well + Orbiting Planet + Bent Light Rays (46.2 – 64.9s)
+        if (t >= 46.2) {
+          const gridFade = easeOutCubic(invLerp(46.2, 47.6, t));
+          ctx.save();
+          ctx.globalAlpha = gridFade * exit;
+
+          // Spring-physics depth when massive golden Sun drops at t = 48.0s
+          let wellDepth = 0;
+          let sunDropY = -280 * s;
+          if (t >= 47.8) {
+            const dt = t - 48.0;
+            if (dt < 0) {
+              // Sun falling down toward grid
+              const fp = invLerp(47.8, 48.0, t);
+              sunDropY = lerp(-240 * s, 0, fp * fp);
+            } else {
+              // Damped harmonic spring oscillation of the fabric!
+              const osc = 1 - Math.exp(-dt * 2.4) * Math.cos(dt * 7.2);
+              wellDepth = clamp(osc, 0, 1.25) * (isPortrait ? 138 : 148) * s;
+              sunDropY = (1 - osc) * -28 * s;
+            }
+          }
+
+          // 3D -> 2D Perspective Projection helper
+          const gridCenterY = stageCY + 16 * s;
+          const gridScale = (isPortrait ? 34 : 44) * s;
+          const halfN = 9; // 19x19 grid lines
+
+          const project = (gx, gy, gz) => {
+            // Tilt camera nicely to view the 3D funnel depth clearly
+            const persp = 820 / (820 + gy * 0.42);
+            return {
+              x: cx + gx * persp,
+              y: gridCenterY + gy * 0.46 * persp + gz * persp,
+              scale: persp,
+            };
+          };
+
+          const getWellZ = (gx, gy) => {
+            const r = Math.hypot(gx, gy);
+            // Smooth gravitational potential funnel: z = A / (r/scale + c)
+            return wellDepth / (r / (gridScale * 1.45) + 0.62);
+          };
+
+          // Draw 3D warped spacetime mesh
+          ctx.lineWidth = 1.35 * s;
+          for (let i = -halfN; i <= halfN; i++) {
+            // Lines along X
+            ctx.beginPath();
+            for (let j = -halfN; j <= halfN; j += 0.5) {
+              const gx = j * gridScale;
+              const gy = i * gridScale;
+              const p = project(gx, gy, getWellZ(gx, gy));
+              if (j === -halfN) ctx.moveTo(p.x, p.y);
+              else ctx.lineTo(p.x, p.y);
+            }
+            const distFromMid = Math.abs(i) / halfN;
+            ctx.strokeStyle = `rgba(251, 191, 36, ${lerp(0.62, 0.18, distFromMid)})`;
+            ctx.stroke();
+
+            // Lines along Y
+            ctx.beginPath();
+            for (let j = -halfN; j <= halfN; j += 0.5) {
+              const gx = i * gridScale;
+              const gy = j * gridScale;
+              const p = project(gx, gy, getWellZ(gx, gy));
+              if (j === -halfN) ctx.moveTo(p.x, p.y);
+              else ctx.lineTo(p.x, p.y);
+            }
+            ctx.strokeStyle = `rgba(245, 158, 11, ${lerp(0.58, 0.16, distFromMid)})`;
+            ctx.stroke();
+          }
+
+          // Massive Golden Sun seated in the gravity well
+          if (t >= 47.6) {
+            const sunAlpha = clamp(invLerp(47.6, 48.0, t));
+            const sunP = project(0, 0, getWellZ(0, 0) * 0.52);
+            ctx.save();
+            ctx.globalAlpha = sunAlpha * exit;
+            drawSun(sunP.x, sunP.y + sunDropY - 12 * s, (isPortrait ? 38 : 44) * s, t);
+            ctx.restore();
+          }
+
+          // Orbiting Planet rolling naturally along the curved funnel wall (55.4 – 64.9s)
+          if (t >= 55.2) {
+            const plAlpha = easeOutCubic(invLerp(55.2, 56.0, t));
+            const orbitR = gridScale * 4.4;
+            const ang = (t - 55.2) * 1.35;
+
+            ctx.save();
+            ctx.globalAlpha = plAlpha * exit;
+
+            // Luminous curved trail behind planet
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 3 * s;
+            ctx.shadowColor = 'rgba(56, 189, 248, 0.8)';
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            for (let k = 0; k <= 36; k++) {
+              const a = ang - (k / 36) * 1.9;
+              const gx = Math.cos(a) * orbitR;
+              const gy = Math.sin(a) * orbitR;
+              const pt = project(gx, gy, getWellZ(gx, gy) - 6 * s);
+              if (k === 0) ctx.moveTo(pt.x, pt.y);
+              else ctx.lineTo(pt.x, pt.y);
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Planet sphere
+            const px3 = Math.cos(ang) * orbitR;
+            const py3 = Math.sin(ang) * orbitR;
+            const pp = project(px3, py3, getWellZ(px3, py3) - 10 * s);
+            drawEarth(pp.x, pp.y, 15 * s * pp.scale, t);
+            ctx.restore();
+          }
+
+          // Gravitational Lensing: Starlight Rays visibly curving past the Sun (59.8 – 64.9s)
+          if (t >= 59.8) {
+            const rayProg = easeOutCubic(invLerp(59.8, 62.4, t));
+            ctx.save();
+            ctx.globalAlpha = clamp(invLerp(59.8, 60.3, t)) * exit;
+
+            // Distant star source on left edge
+            const starPos = project(-halfN * gridScale * 0.95, -gridScale * 2.2, 0);
+            drawGlowCircle(starPos.x, starPos.y, 7 * s, '#ffffff', '#e0f2fe', '#22d3ee', 20);
+
+            // Two radiant light rays shooting past top & bottom of gravity well and bending inward
+            [-1, 1].forEach((side) => {
+              ctx.beginPath();
+              const maxSeg = Math.floor(80 * rayProg);
+              for (let k = 0; k <= maxSeg; k++) {
+                const u = k / 80; // 0 -> 1 across grid
+                const gx = lerp(-halfN * gridScale * 0.95, halfN * gridScale * 0.95, u);
+                // Smooth inward deflection around x = 0
+                const bend = Math.exp(-Math.pow((gx - 20 * s) / (gridScale * 3.8), 2)) * (-side * gridScale * 1.35);
+                const driftAfter = u > 0.5 ? (u - 0.5) * (-side * gridScale * 2.1) : 0;
+                const gy = side * gridScale * 2.45 + bend + driftAfter - gridScale * 0.8;
+                const gz = getWellZ(gx, gy) - 12 * s;
+                const pt = project(gx, gy, gz);
+                if (k === 0) ctx.moveTo(pt.x, pt.y);
+                else ctx.lineTo(pt.x, pt.y);
+              }
+              ctx.strokeStyle = '#f8fafc';
+              ctx.lineWidth = 3 * s;
+              ctx.shadowColor = '#38bdf8';
+              ctx.shadowBlur = 16;
+              ctx.stroke();
+              ctx.shadowBlur = 0;
+            });
+
+            // Label: PEMBELOKAN CAHAYA
+            const lblY = stageTop + stageH * 0.10;
+            ctx.font = `700 ${Math.round(16 * s)}px "JetBrains Mono", monospace`;
+            ctx.fillStyle = '#e0f2fe';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#22d3ee';
+            ctx.shadowBlur = 12;
+            ctx.fillText('✦ PEMBELOKAN CAHAYA (GRAVITATIONAL LENSING)', cx, lblY);
+            ctx.shadowBlur = 0;
+            ctx.restore();
+          }
+
+          ctx.restore();
+        }
+
+        ctx.restore();
+      }
+
+      // --- SCENE 5 (64.9s – 83.5s): Mana Yang Benar? GPS & Misi Bulan ---
+      function renderScene5(L, t) {
+        const { cx, stageTop, stageCY, stageH, s, isPortrait } = L;
+        const enter = easeOutCubic(invLerp(64.9, 65.5, t));
+        const exit = 1 - invLerp(83.0, 83.5, t);
+        ctx.save();
+        ctx.globalAlpha = enter * exit;
+
+        // Part 5A: Verdict Headline (64.9 – 69.7s)
+        if (t < 69.8) {
+          const fadeOut = 1 - invLerp(69.2, 69.7, t);
+          ctx.save();
+          ctx.globalAlpha = enter * fadeOut;
+
+          ctx.font = `800 ${Math.round((isPortrait ? 40 : 52) * s)}px "Space Grotesk", sans-serif`;
+          ctx.fillStyle = '#f8fafc';
+          ctx.textAlign = 'center';
+          ctx.fillText('MANA YANG BENAR?', cx, stageCY - 55 * s);
+
+          const badgeP = easeOutBack(invLerp(66.2, 67.1, t));
+          if (badgeP > 0.01) {
+            ctx.save();
+            ctx.translate(cx, stageCY + 34 * s);
+            ctx.scale(lerp(0.7, 1, badgeP), lerp(0.7, 1, badgeP));
+            const bw = (isPortrait ? 400 : 470) * s;
+            const bh = 82 * s;
+            drawRoundRect(-bw / 2, -bh / 2, bw, bh, 20 * s);
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.14)';
+            ctx.fill();
+            ctx.shadowColor = 'rgba(251, 191, 36, 0.55)';
+            ctx.shadowBlur = 24;
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 2.4 * s;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            ctx.font = `800 ${Math.round((isPortrait ? 26 : 30) * s)}px "Space Grotesk", sans-serif`;
+            ctx.fillStyle = '#fef3c7';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('EINSTEIN: FUNDAMENTAL', 0, 0);
+            ctx.restore();
+          }
+          ctx.restore();
+        }
+
+        // Part 5B: GPS Relativitas Demo (69.5 – 74.8s)
+        if (t >= 69.5 && t < 74.9) {
+          const aIn = easeOutCubic(invLerp(69.5, 70.1, t));
+          const aOut = 1 - invLerp(74.3, 74.8, t);
+          ctx.save();
+          ctx.globalAlpha = aIn * aOut;
+
+          drawBadge(cx, L.topBarY, 'BUKTI NYATA • SATELIT GPS', '#fbbf24', s, aIn);
+
+          const earthX = isPortrait ? cx : cx - 210 * s;
+          const earthY = isPortrait ? stageTop + stageH * 0.28 : stageCY + 10 * s;
+          const phoneX = isPortrait ? cx : cx + 210 * s;
+          const phoneY = isPortrait ? stageTop + stageH * 0.72 : stageCY + 10 * s;
+
+          // Earth + Orbiting GPS Satellite
+          const earthR = 54 * s;
+          const satOrbit = 112 * s;
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.25)';
+          ctx.lineWidth = 1.5 * s;
+          ctx.setLineDash([6 * s, 6 * s]);
+          ctx.beginPath();
+          ctx.arc(earthX, earthY, satOrbit, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          drawEarth(earthX, earthY, earthR, t);
+
+          const satAng = -0.75 + (t - 69.5) * 0.55;
+          const satX = earthX + Math.cos(satAng) * satOrbit;
+          const satY = earthY + Math.sin(satAng) * satOrbit;
+
+          // Pulsing signal arcs from satellite toward smartphone
+          const sigP = ((t - 69.5) * 1.4) % 1;
+          ctx.strokeStyle = `rgba(251, 191, 36, ${(1 - sigP) * 0.75})`;
+          ctx.lineWidth = 2 * s;
+          ctx.beginPath();
+          ctx.moveTo(satX, satY);
+          ctx.lineTo(lerp(satX, phoneX, sigP), lerp(satY, phoneY, sigP));
+          ctx.stroke();
+
+          // Stylized GPS Satellite with solar wings
+          ctx.save();
+          ctx.translate(satX, satY);
+          ctx.rotate(satAng + Math.PI / 2);
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillRect(-26 * s, -5 * s, 16 * s, 10 * s);
+          ctx.fillRect(10 * s, -5 * s, 16 * s, 10 * s);
+          ctx.fillStyle = '#fbbf24';
+          drawRoundRect(-8 * s, -8 * s, 16 * s, 16 * s, 4 * s);
+          ctx.fill();
+          ctx.restore();
+
+          // Sleek Smartphone UI showing GPS drift -> Relativistic correction
+          const pw = 178 * s;
+          const ph = 248 * s;
+          ctx.save();
+          ctx.translate(phoneX, phoneY);
+
+          // Phone body
+          drawRoundRect(-pw / 2, -ph / 2, pw, ph, 24 * s);
+          ctx.fillStyle = '#0f172a';
+          ctx.fill();
+          ctx.strokeStyle = '#475569';
+          ctx.lineWidth = 3 * s;
+          ctx.stroke();
+
+          // Screen area
+          const sw = pw - 16 * s;
+          const sh = ph - 26 * s;
+          drawRoundRect(-sw / 2, -sh / 2, sw, sh, 16 * s);
+          ctx.fillStyle = '#070d1e';
+          ctx.fill();
+
+          // Mini map grid inside screen
+          ctx.save();
+          drawRoundRect(-sw / 2, -sh / 2, sw, sh, 16 * s);
+          ctx.clip();
+          ctx.strokeStyle = 'rgba(148, 163, 184, 0.14)';
+          ctx.lineWidth = 1;
+          for (let gx = -sw / 2; gx <= sw / 2; gx += 24 * s) {
+            ctx.beginPath(); ctx.moveTo(gx, -sh / 2); ctx.lineTo(gx, sh / 2); ctx.stroke();
+          }
+          for (let gy = -sh / 2; gy <= sh / 2; gy += 24 * s) {
+            ctx.beginPath(); ctx.moveTo(-sw / 2, gy); ctx.lineTo(sw / 2, gy); ctx.stroke();
+          }
+
+          // Target crosshair in center
+          ctx.strokeStyle = 'rgba(52, 211, 153, 0.45)';
+          ctx.lineWidth = 1.5 * s;
+          ctx.beginPath();
+          ctx.arc(0, -10 * s, 18 * s, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Drift vs Corrected state (switches cleanly at t = 72.4s)
+          const fixedP = easeOutBack(invLerp(72.3, 72.9, t));
+          const driftX = lerp(Math.sin(t * 7) * 42 * s + 28 * s, 0, fixedP);
+          const driftY = lerp(Math.cos(t * 5.5) * 32 * s - 22 * s, -10 * s, fixedP);
+          const pinCol = t < 72.4 ? '#fb7185' : '#34d399';
+
+          // Dotted error vector
+          if (t < 72.5) {
+            ctx.strokeStyle = 'rgba(251, 113, 133, 0.7)';
+            ctx.setLineDash([4 * s, 4 * s]);
+            ctx.beginPath(); ctx.moveTo(0, -10 * s); ctx.lineTo(driftX, driftY); ctx.stroke();
+            ctx.setLineDash([]);
+          }
+
+          // Map pin
+          drawGlowCircle(driftX, driftY, 9 * s, '#ffffff', pinCol, pinCol, 14);
+
+          // Status badge at bottom of phone screen
+          const stText = t < 72.4 ? 'Meleset +11 km/hari!' : 'Koreksi Relativitas ✓';
+          drawRoundRect(-sw / 2 + 8 * s, sh / 2 - 44 * s, sw - 16 * s, 32 * s, 8 * s);
+          ctx.fillStyle = t < 72.4 ? 'rgba(225, 29, 72, 0.85)' : 'rgba(5, 150, 105, 0.85)';
+          ctx.fill();
+          ctx.font = `700 ${Math.round(11.5 * s)}px "JetBrains Mono", monospace`;
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(stText, 0, sh / 2 - 28 * s);
+          ctx.restore();
+          ctx.restore();
+
+          ctx.restore();
+        }
+
+        // Part 5C: Newton Tidak Salah — Flattening Grid & Apollo Rocket to Moon (74.5 – 83.5s)
+        if (t >= 74.5) {
+          const aIn = easeOutCubic(invLerp(74.5, 75.3, t));
+          ctx.save();
+          ctx.globalAlpha = aIn * exit;
+
+          drawBadge(cx, L.topBarY, 'NEWTON TIDAK SALAH • PENDEKATAN AKURAT', '#22d3ee', s, aIn);
+
+          // Gently flattening grid background (showing low gravity approximates flat Euclidean space)
+          const flatP = easeOutCubic(invLerp(74.8, 77.5, t));
+          const curveAmp = lerp(42 * s, 3 * s, flatP);
+          ctx.strokeStyle = 'rgba(34, 211, 238, 0.16)';
+          ctx.lineWidth = 1.2 * s;
+          for (let r = -3; r <= 3; r++) {
+            const ry = stageCY + r * 46 * s;
+            ctx.beginPath();
+            ctx.moveTo(cx - 340 * s, ry);
+            ctx.quadraticCurveTo(cx, ry + curveAmp, cx + 340 * s, ry);
+            ctx.stroke();
+          }
+
+          // Earth & Moon positions
+          const span = (isPortrait ? 195 : 295) * s;
+          const eX = cx - span;
+          const eY = stageCY + 45 * s;
+          const mX = cx + span;
+          const mY = stageCY - 55 * s;
+
+          // Parabolic Translunar Trajectory (Quadratic Bezier)
+          const ctrlX = cx - 20 * s;
+          const ctrlY = stageCY - (isPortrait ? 165 : 185) * s;
+
+          ctx.strokeStyle = 'rgba(34, 211, 238, 0.55)';
+          ctx.lineWidth = 2.5 * s;
+          ctx.setLineDash([8 * s, 7 * s]);
+          ctx.beginPath();
+          ctx.moveTo(eX, eY);
+          ctx.quadraticCurveTo(ctrlX, ctrlY, mX, mY);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Earth and Moon
+          drawEarth(eX, eY, 52 * s, t);
+          drawMoon(mX, mY, 34 * s);
+
+          ctx.font = `700 ${Math.round(13 * s)}px "JetBrains Mono", monospace`;
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillText('BUMI', eX, eY + 74 * s);
+          ctx.fillStyle = '#e2e8f0';
+          ctx.fillText('BULAN', mX, mY + 54 * s);
+
+          // Stylized Apollo Rocket flying smoothly along Bezier path (76.2 – 82.6s)
+          const flightP = easeInOutCubic(invLerp(76.2, 82.2, t));
+          const u = flightP;
+          const rx = (1 - u) * (1 - u) * eX + 2 * (1 - u) * u * ctrlX + u * u * mX;
+          const ry = (1 - u) * (1 - u) * eY + 2 * (1 - u) * u * ctrlY + u * u * mY;
+          // Tangent derivative for rocket heading
+          const dx = 2 * (1 - u) * (ctrlX - eX) + 2 * u * (mX - ctrlX);
+          const dy = 2 * (1 - u) * (ctrlY - eY) + 2 * u * (mY - ctrlY);
+          const heading = Math.atan2(dy, dx);
+
+          // Glowing completed trajectory trail
+          ctx.strokeStyle = '#22d3ee';
+          ctx.lineWidth = 3 * s;
+          ctx.beginPath();
+          for (let k = 0; k <= 40; k++) {
+            const ku = (k / 40) * u;
+            const tx = (1 - ku) * (1 - ku) * eX + 2 * (1 - ku) * ku * ctrlX + ku * ku * mX;
+            const ty = (1 - ku) * (1 - ku) * eY + 2 * (1 - ku) * ku * ctrlY + ku * ku * mY;
+            if (k === 0) ctx.moveTo(tx, ty);
+            else ctx.lineTo(tx, ty);
+          }
+          ctx.stroke();
+
+          // Draw Rocket
+          if (t >= 76.0) {
+            ctx.save();
+            ctx.translate(rx, ry);
+            ctx.rotate(heading);
+            // Exhaust flame
+            const flameLen = (14 + Math.sin(t * 45) * 5) * s;
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath();
+            ctx.moveTo(-16 * s, -5 * s);
+            ctx.lineTo(-16 * s - flameLen, 0);
+            ctx.lineTo(-16 * s, 5 * s);
+            ctx.closePath();
+            ctx.fill();
+
+            // Fins
+            ctx.fillStyle = '#22d3ee';
+            ctx.beginPath();
+            ctx.moveTo(-14 * s, -7 * s); ctx.lineTo(-20 * s, -15 * s); ctx.lineTo(-6 * s, -7 * s);
+            ctx.moveTo(-14 * s, 7 * s);  ctx.lineTo(-20 * s, 15 * s);  ctx.lineTo(-6 * s, 7 * s);
+            ctx.fill();
+
+            // Fuselage
+            ctx.fillStyle = '#f8fafc';
+            ctx.beginPath();
+            ctx.moveTo(22 * s, 0);
+            ctx.quadraticCurveTo(8 * s, -9 * s, -15 * s, -8 * s);
+            ctx.lineTo(-15 * s, 8 * s);
+            ctx.quadraticCurveTo(8 * s, 9 * s, 22 * s, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            // Window
+            ctx.fillStyle = '#0284c7';
+            ctx.beginPath();
+            ctx.arc(3 * s, 0, 3.8 * s, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          // Floating mission label
+          ctx.font = `700 ${Math.round(16 * s)}px "Space Grotesk", sans-serif`;
+          ctx.fillStyle = '#bae6fd';
+          ctx.textAlign = 'center';
+          ctx.fillText('Misi Apollo ke Bulan • Lintasan Newton', cx, stageTop + stageH * 0.14);
+
+          ctx.restore();
+        }
+
+        ctx.restore();
+      }
+
+      // --- SCENE 6 (83.5s – 92.3s): Penutup / Sintesis ---
+      function renderScene6(L, t) {
+        const { cx, stageTop, stageBottom, stageCY, stageH, s, isPortrait } = L;
+        const enter = easeOutCubic(invLerp(83.5, 84.4, t));
+        ctx.save();
+        ctx.globalAlpha = enter;
+
+        // 1. Unified Cosmic Emblem (Newton Cyan Orbit + Einstein Gold Wireframe Sphere)
+        const emblemY = isPortrait ? stageTop + stageH * 0.19 : stageTop + stageH * 0.25;
+        const emR = (isPortrait ? 64 : 68) * s;
+        ctx.save();
+        ctx.translate(cx, emblemY);
+
+        // Einstein golden warped wireframe rings
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.55)';
+        ctx.lineWidth = 1.6 * s;
+        for (let i = -2; i <= 2; i++) {
+          ctx.beginPath();
+          ctx.ellipse(0, i * 10 * s, emR * (1 - Math.abs(i) * 0.15), emR * 0.34, 0.18 + Math.sin(t * 0.7) * 0.05, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Newton glowing cyan tilted orbital ring
+        ctx.save();
+        ctx.rotate(-0.42);
+        ctx.strokeStyle = '#22d3ee';
+        ctx.lineWidth = 2.4 * s;
+        ctx.shadowColor = 'rgba(34, 211, 238, 0.7)';
+        ctx.shadowBlur = 14;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, emR * 1.35, emR * 0.42, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Orbiting cyan particle
+        const pAng = t * 1.9;
+        const px = Math.cos(pAng) * emR * 1.35;
+        const py = Math.sin(pAng) * emR * 0.42;
+        drawGlowCircle(px, py, 6.5 * s, '#ffffff', '#22d3ee', '#0284c7', 12);
+        ctx.restore();
+
+        // Central luminous Sun/Core
+        drawGlowCircle(0, 0, 18 * s, '#fef9c3', '#fbbf24', '#f59e0b', 22);
+        ctx.restore();
+
+        // 2. Two Sleek Summary Cards (Side-by-side in 16:9, Stacked in Portrait)
+        const card1P = easeOutBack(invLerp(84.0, 84.9, t));
+        const card2P = easeOutBack(invLerp(87.6, 88.5, t));
+
+        const cardW = (isPortrait ? 430 : 370) * s;
+        const cardH = (isPortrait ? 116 : 126) * s;
+
+        const c1X = isPortrait ? cx : cx - cardW / 2 - 18 * s;
+        const c1Y = isPortrait ? stageTop + stageH * 0.47 : stageCY + 68 * s;
+        const c2X = isPortrait ? cx : cx + cardW / 2 + 18 * s;
+        const c2Y = isPortrait ? stageTop + stageH * 0.67 : stageCY + 68 * s;
+
+        // Helper for Outro Summary Card
+        const drawSummaryCard = (x, y, prog, accent, title, subtitle) => {
+          if (prog <= 0.01) return;
+          ctx.save();
+          ctx.globalAlpha = clamp(prog) * enter;
+          ctx.translate(x, y + (1 - clamp(prog)) * 20 * s);
+
+          drawRoundRect(-cardW / 2, -cardH / 2, cardW, cardH, 18 * s);
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.86)';
+          ctx.fill();
+          ctx.shadowColor = accent;
+          ctx.shadowBlur = 16;
+          ctx.strokeStyle = accent;
+          ctx.lineWidth = 2 * s;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          ctx.font = `800 ${Math.round(22 * s)}px "Space Grotesk", sans-serif`;
+          ctx.fillStyle = accent;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(title, 0, -18 * s);
+
+          ctx.font = `600 ${Math.round(17 * s)}px "Inter", sans-serif`;
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillText(subtitle, 0, 18 * s);
+          ctx.restore();
+        };
+
+        drawSummaryCard(c1X, c1Y, card1P, '#22d3ee', 'ISAAC NEWTON', 'Alat Hitung Paling Praktis');
+        drawSummaryCard(c2X, c2Y, card2P, '#fbbf24', 'ALBERT EINSTEIN', 'Cara Alam Semesta Bekerja');
+
+        // 3. Prominent Highlighted Creator Account Badge on Outro
+        if (state.showWatermark) {
+          const wmP = easeOutCubic(invLerp(88.2, 89.4, t));
+          ctx.save();
+          ctx.globalAlpha = lerp(0.55, 1, wmP) * enter;
+          const wmY = isPortrait ? stageBottom - 26 * s : stageBottom - 10 * s;
+          const label = state.account;
+          ctx.font = `700 ${Math.round(18 * s)}px "Space Grotesk", sans-serif`;
+          const tw = ctx.measureText(label).width;
+          const bw = tw + 46 * s;
+          const bh = 38 * s;
+
+          drawRoundRect(cx - bw / 2, wmY - bh / 2, bw, bh, bh / 2);
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+          ctx.fill();
+          const gradBorder = ctx.createLinearGradient(cx - bw / 2, wmY, cx + bw / 2, wmY);
+          gradBorder.addColorStop(0, '#22d3ee');
+          gradBorder.addColorStop(1, '#fbbf24');
+          ctx.strokeStyle = gradBorder;
+          ctx.lineWidth = 2 * s;
+          ctx.stroke();
+
+          ctx.fillStyle = '#f8fafc';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(label, cx, wmY + 0.5 * s);
+          ctx.restore();
+        }
+
+        ctx.restore();
+      }
+
+      // =========================================================================
+      // 8. MASTER RENDER PIPELINE
+      // =========================================================================
+      function renderFrame(t) {
+        const L = getLayout(canvas.width, canvas.height);
+
+        // 1. Deep Cosmic Background + Twinkling Stars
+        drawCosmicBackground(L, t);
+
+        // 2. Dispatch Active Scene Renderer (with crisp overlap tolerance)
+        if (t < 12.6) {
+          renderScene1(L, t);
+        } else if (t < 31.4) {
+          renderScene2(L, t);
+        } else if (t < 42.8) {
+          renderScene3(L, t);
+        } else if (t < 64.9) {
+          renderScene4(L, t);
+        } else if (t < 83.5) {
+          renderScene5(L, t);
+        } else {
+          renderScene6(L, t);
+        }
+
+        // 3. Persistent Overlays (Top Progress Bar, Subtitles, Watermark)
+        drawTopProgressBar(L, t);
+        drawSubtitles(L, t);
+        drawWatermark(L, t);
+      }
+
+      // =========================================================================
+      // 9. TIMELINE & PLAYBACK CONTROLLER
+      // =========================================================================
+      function syncTriggeredCuesForSeek(targetTime) {
+        state.triggeredCues.clear();
+        for (const cue of SFX_CUES) {
+          if (cue.t < targetTime) {
+            state.triggeredCues.add(cue.id);
+          }
+        }
+      }
+
+      function checkSfxCues(prevTime, curTime) {
+        for (const cue of SFX_CUES) {
+          if (!state.triggeredCues.has(cue.id) && curTime >= cue.t && curTime - cue.t < 0.8) {
+            state.triggeredCues.add(cue.id);
+            audioEngine.playCue(cue.fn);
+          }
+        }
+      }
+
+      function updateTransportUI() {
+        const t = state.currentTime;
+        ui.currentTimeLabel.textContent = formatTime(t);
+        ui.scrubber.value = t.toFixed(2);
+
+        const activeScene = SCENES.find((sc) => t >= sc.start && t < sc.end) || SCENES[SCENES.length - 1];
+        ui.activeSceneLabel.textContent = activeScene.title;
+
+        // Highlight active chapter marker
+        document.querySelectorAll('.chapter-btn').forEach((btn) => {
+          const id = Number(btn.dataset.sceneId);
+          if (id === activeScene.id) {
+            btn.className = 'chapter-btn px-2 py-1.5 rounded-lg border text-[11px] font-semibold transition truncate bg-cyan-500/20 border-cyan-400/70 text-cyan-200';
+          } else {
+            btn.className = 'chapter-btn px-2 py-1.5 rounded-lg border text-[11px] font-medium transition truncate bg-slate-800/60 border-slate-700/70 text-slate-400 hover:text-slate-200 hover:bg-slate-800';
+          }
+        });
+
+        // Update recording progress if active
+        if (state.isRecording) {
+          const pct = Math.min(100, (t / TOTAL_DURATION) * 100);
+          ui.recProgressBar.style.width = `${pct.toFixed(1)}%`;
+          ui.recPercent.textContent = `${Math.round(pct)}%`;
+          ui.recBadgeText.textContent = `REC ${formatMMSS(t)} / ${formatMMSS(TOTAL_DURATION)}`;
+        }
+      }
+
+      function updatePlayButtonUI() {
+        if (state.isPlaying) {
+          ui.playPauseLabel.textContent = 'Jeda';
+          ui.playIcon.classList.add('hidden');
+          ui.pauseIcon.classList.remove('hidden');
+        } else {
+          ui.playPauseLabel.textContent = state.currentTime >= TOTAL_DURATION ? 'Putar Lagi' : 'Putar';
+          ui.playIcon.classList.remove('hidden');
+          ui.pauseIcon.classList.add('hidden');
+        }
+      }
+
+      function play() {
+        audioEngine.init();
+        if (state.currentTime >= TOTAL_DURATION - 0.05) {
+          state.currentTime = 0;
+          syncTriggeredCuesForSeek(0);
+        }
+        state.isPlaying = true;
+        state.lastFrameTs = performance.now();
+        audioEngine.startVOAt(state.currentTime);
+        updatePlayButtonUI();
+      }
+
+      function pause() {
+        state.isPlaying = false;
+        audioEngine.stopVO();
+        updatePlayButtonUI();
+      }
+
+      function seekTo(sec) {
+        const clamped = clamp(sec, 0, TOTAL_DURATION);
+        state.currentTime = clamped;
+        syncTriggeredCuesForSeek(clamped);
+        if (state.isPlaying) {
+          audioEngine.startVOAt(clamped);
+        }
+        renderFrame(clamped);
+        updateTransportUI();
+      }
+
+      function animationLoop(now) {
+        if (state.isPlaying) {
+          const dt = Math.min(0.1, (now - state.lastFrameTs) / 1000);
+          state.lastFrameTs = now;
+          const prev = state.currentTime;
+          state.currentTime += dt;
+
+          checkSfxCues(prev, state.currentTime);
+
+          if (state.currentTime >= TOTAL_DURATION) {
+            state.currentTime = TOTAL_DURATION;
+            renderFrame(state.currentTime);
+            updateTransportUI();
+            pause();
+
+            // Automatically finalize export when recording reaches 92.3s
+            if (state.isRecording) {
+              setTimeout(() => stopRecording(), 220);
+            }
+          } else {
+            renderFrame(state.currentTime);
+            updateTransportUI();
+          }
+        }
+        requestAnimationFrame(animationLoop);
+      }
+
+      // =========================================================================
+      // 10. RECORD & EXPORT TO MP4 ENGINE (MediaRecorder + Canvas + Mixed Audio)
+      // =========================================================================
+      let mediaRecorder = null;
+      let recordedChunks = [];
+      let selectedMime = null;
+
+      function detectBestRecorderFormat() {
+        if (typeof MediaRecorder === 'undefined') return null;
+        const candidates = [
+          { mime: 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', ext: 'mp4', label: 'MP4 (H.264/AAC)' },
+          { mime: 'video/mp4;codecs=avc1,mp4a.40.2',        ext: 'mp4', label: 'MP4 (H.264)' },
+          { mime: 'video/mp4',                              ext: 'mp4', label: 'MP4' },
+          { mime: 'video/webm;codecs=vp9,opus',             ext: 'webm', label: 'WebM (VP9/Opus)' },
+          { mime: 'video/webm;codecs=vp8,opus',             ext: 'webm', label: 'WebM (VP8)' },
+          { mime: 'video/webm',                             ext: 'webm', label: 'WebM' },
+        ];
+        for (const c of candidates) {
+          try {
+            if (MediaRecorder.isTypeSupported(c.mime)) return c;
+          } catch (_) {}
+        }
+        return { mime: '', ext: 'webm', label: 'Video Default' };
+      }
+
+      function startRecordingExport() {
+        if (state.isRecording) return;
+        const fmt = detectBestRecorderFormat();
+        if (!fmt) {
+          showStatus('Browser Anda tidak mendukung MediaRecorder API untuk merekam kanvas.', 'error');
+          return;
+        }
+        selectedMime = fmt;
+
+        try {
+          audioEngine.init();
+
+          // Rewind cleanly to 00:00
+          pause();
+          state.currentTime = 0;
+          syncTriggeredCuesForSeek(0);
+          renderFrame(0);
+          updateTransportUI();
+
+          // Combine 30 FPS canvas video stream + Web Audio mixed destination stream
+          const videoStream = canvas.captureStream(30);
+          const audioTracks = audioEngine.streamDest.stream.getAudioTracks();
+          const combinedStream = new MediaStream([
+            ...videoStream.getVideoTracks(),
+            ...audioTracks,
+          ]);
+
+          const options = {
+            videoBitsPerSecond: 6000000,
+            audioBitsPerSecond: 192000,
+          };
+          if (fmt.mime) options.mimeType = fmt.mime;
+
+          recordedChunks = [];
+          mediaRecorder = new MediaRecorder(combinedStream, options);
+
+          mediaRecorder.ondataavailable = (ev) => {
+            if (ev.data && ev.data.size > 0) {
+              recordedChunks.push(ev.data);
+            }
+          };
+
+          mediaRecorder.onstop = () => {
+            const blobType = fmt.mime || 'video/webm';
+            const blob = new Blob(recordedChunks, { type: blobType });
+            const url = URL.createObjectURL(blob);
+            const cleanAccount = state.account.replace('@', '').toLowerCase();
+            const cleanRatio = state.ratio.replace(':', 'x');
+            const filename = `gravitasi-newton-einstein_${cleanAccount}_${cleanRatio}.${fmt.ext}`;
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+            setRecordingUI(false);
+            if (fmt.ext === 'mp4') {
+              showStatus(`Video berhasil diekspor ke MP4: "${filename}" (${(blob.size / (1024 * 1024)).toFixed(1)} MB).`, 'success');
+            } else {
+              showStatus(`Browser ini menggunakan fallback ${fmt.label}. File "${filename}" (${(blob.size / (1024 * 1024)).toFixed(1)} MB) telah diunduh.`, 'warn');
+            }
+          };
+
+          mediaRecorder.start(250);
+          state.isRecording = true;
+          setRecordingUI(true);
+          showStatus(`Perekaman dimulai (${fmt.label})! Biarkan tab tetap aktif hingga 01:32.3 selesai.`, 'info');
+
+          // Start synchronized playback from 00:00
+          play();
+        } catch (err) {
+          console.error(err);
+          setRecordingUI(false);
+          showStatus('Gagal memulai perekaman video. Coba lagi atau gunakan Chrome/Edge terbaru.', 'error');
+        }
+      }
+
+      function stopRecording() {
+        if (!state.isRecording) return;
+        state.isRecording = false;
+        pause();
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          try { mediaRecorder.stop(); } catch (_) {}
+        }
+      }
+
+      function setRecordingUI(active) {
+        if (active) {
+          ui.recBadge.classList.remove('hidden');
+          ui.recBadge.classList.add('flex');
+          ui.recProgressWrap.classList.remove('hidden');
+          ui.recordExportBtn.classList.add('hidden');
+          ui.stopSaveNowBtn.classList.remove('hidden');
+          document.querySelectorAll('.ratio-btn').forEach((b) => (b.disabled = true));
+        } else {
+          ui.recBadge.classList.add('hidden');
+          ui.recBadge.classList.remove('flex');
+          ui.recProgressWrap.classList.add('hidden');
+          ui.recordExportBtn.classList.remove('hidden');
+          ui.stopSaveNowBtn.classList.add('hidden');
+          document.querySelectorAll('.ratio-btn').forEach((b) => (b.disabled = false));
+        }
+      }
+
+      // =========================================================================
+      // 11. UI INITIALIZATION & EVENT BINDINGS
+      // =========================================================================
+      function setAspectRatio(ratioKey) {
+        if (state.isRecording) {
+          showStatus('Tidak dapat mengubah aspek rasio saat sedang merekam.', 'warn');
+          return;
+        }
+        const cfg = ASPECT_CONFIGS[ratioKey];
+        if (!cfg) return;
+        state.ratio = ratioKey;
+        canvas.width = cfg.width;
+        canvas.height = cfg.height;
+        ui.resPill.textContent = cfg.label;
+
+        document.querySelectorAll('.ratio-btn').forEach((btn) => {
+          const isSel = btn.dataset.ratio === ratioKey;
+          btn.className = isSel
+            ? 'ratio-btn flex flex-col items-center justify-center py-2 px-2 rounded-xl border text-xs font-semibold transition bg-cyan-500/15 border-cyan-400 text-cyan-200'
+            : 'ratio-btn flex flex-col items-center justify-center py-2 px-2 rounded-xl border text-xs font-semibold transition bg-slate-800/70 border-slate-700 text-slate-300 hover:bg-slate-800';
+        });
+
+        renderFrame(state.currentTime);
+      }
+
+      function setAccount(handle) {
+        state.account = handle;
+        document.querySelectorAll('.account-btn').forEach((btn) => {
+          const isSel = btn.dataset.account === handle;
+          btn.className = isSel
+            ? 'account-btn py-2 px-1.5 rounded-xl border text-[11px] sm:text-xs font-semibold transition bg-amber-500/15 border-amber-400 text-amber-200 truncate'
+            : 'account-btn py-2 px-1.5 rounded-xl border text-[11px] sm:text-xs font-semibold transition bg-slate-800/70 border-slate-700 text-slate-300 hover:bg-slate-800 truncate';
+        });
+        renderFrame(state.currentTime);
+      }
+
+      function initUI() {
+        // Populate Scene Chapter Buttons
+        SCENES.forEach((sc) => {
+          const btn = document.createElement('button');
+          btn.dataset.sceneId = sc.id;
+          btn.textContent = `${sc.short} (${formatMMSS(sc.start)})`;
+          btn.className = 'chapter-btn px-2 py-1.5 rounded-lg border text-[11px] font-medium transition truncate bg-slate-800/60 border-slate-700/70 text-slate-400 hover:text-slate-200';
+          btn.addEventListener('click', () => {
+            if (state.isRecording) return;
+            seekTo(sc.start);
+          });
+          ui.chapterButtons.appendChild(btn);
+        });
+
+        // Detect supported recorder format badge
+        const fmt = detectBestRecorderFormat();
+        if (fmt) {
+          ui.codecPill.textContent = fmt.ext === 'mp4' ? 'Siap MP4' : 'Fallback WebM';
+          if (fmt.ext !== 'mp4') {
+            ui.codecPill.className = 'text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30';
+          }
+        }
+
+        // Transport bindings
+        ui.playPauseBtn.addEventListener('click', () => {
+          if (state.isPlaying) pause();
+          else play();
+        });
+
+        ui.restartBtn.addEventListener('click', () => {
+          if (state.isRecording) return;
+          seekTo(0);
+          play();
+        });
+
+        ui.scrubber.addEventListener('input', (e) => {
+          if (state.isRecording) return;
+          seekTo(parseFloat(e.target.value));
+        });
+
+        // Aspect ratio & account selectors
+        document.querySelectorAll('.ratio-btn').forEach((btn) => {
+          btn.addEventListener('click', () => setAspectRatio(btn.dataset.ratio));
+        });
+        document.querySelectorAll('.account-btn').forEach((btn) => {
+          btn.addEventListener('click', () => setAccount(btn.dataset.account));
+        });
+
+        // Visibility toggles
+        ui.toggleSubtitles.addEventListener('change', (e) => {
+          state.showSubtitles = e.target.checked;
+          renderFrame(state.currentTime);
+        });
+        ui.toggleWatermark.addEventListener('change', (e) => {
+          state.showWatermark = e.target.checked;
+          renderFrame(state.currentTime);
+        });
+
+        // Voice Over Upload
+        ui.voFileInput.addEventListener('change', (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (file) audioEngine.loadVoiceOver(file);
+        });
+        ui.clearVoBtn.addEventListener('click', () => audioEngine.clearVoiceOver());
+
+        // Dual Volume Mixers
+        ui.narasiVolumeSlider.addEventListener('input', (e) => {
+          const val = Number(e.target.value);
+          state.narasiVolume = val / 100;
+          state.narasiMuted = val === 0;
+          ui.narasiVolVal.textContent = `${val}%`;
+          ui.muteNarasiIcon.textContent = state.narasiMuted ? '🔇' : '🎙️';
+          audioEngine.updateVolumes();
+        });
+
+        ui.muteNarasiBtn.addEventListener('click', () => {
+          state.narasiMuted = !state.narasiMuted;
+          ui.muteNarasiIcon.textContent = state.narasiMuted ? '🔇' : '🎙️';
+          ui.narasiVolVal.textContent = state.narasiMuted ? '0%' : `${Math.round(state.narasiVolume * 100)}%`;
+          audioEngine.updateVolumes();
+        });
+
+        ui.sfxVolumeSlider.addEventListener('input', (e) => {
+          const val = Number(e.target.value);
+          state.sfxVolume = val / 100;
+          state.sfxMuted = val === 0;
+          ui.sfxVolVal.textContent = `${val}%`;
+          ui.muteSfxIcon.textContent = state.sfxMuted ? '🔇' : '🔊';
+          audioEngine.updateVolumes();
+        });
+
+        ui.muteSfxBtn.addEventListener('click', () => {
+          state.sfxMuted = !state.sfxMuted;
+          ui.muteSfxIcon.textContent = state.sfxMuted ? '🔇' : '🔊';
+          ui.sfxVolVal.textContent = state.sfxMuted ? '0%' : `${Math.round(state.sfxVolume * 100)}%`;
+          audioEngine.updateVolumes();
+        });
+
+        // Export Buttons
+        ui.recordExportBtn.addEventListener('click', startRecordingExport);
+        ui.stopSaveNowBtn.addEventListener('click', stopRecording);
+
+        // Status banner dismiss
+        ui.dismissStatusBtn.addEventListener('click', () => {
+          ui.statusBanner.classList.add('hidden');
+          ui.statusBanner.classList.remove('flex');
+        });
+
+        // Spacebar shortcut for Play/Pause
+        window.addEventListener('keydown', (e) => {
+          if (e.code === 'Space' && !['INPUT', 'TEXTAREA', 'BUTTON'].includes(document.activeElement.tagName)) {
+            e.preventDefault();
+            if (state.isPlaying) pause();
+            else play();
+          }
+        });
+      }
+
+      // Boot studio when window & fonts are ready
+      window.onload = () => {
+        initUI();
+        renderFrame(0);
+        updateTransportUI();
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(() => renderFrame(state.currentTime));
+        }
+        requestAnimationFrame(animationLoop);
+      };
+    })();
+  </script>
+</body>
+</html>
